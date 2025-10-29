@@ -212,9 +212,7 @@ const handleTaskLineCheckbox = (rowIndex: number) => {
         {step?.description
           ? 
            <div className="text-left space-y-1">
-          <p className="font-semibold text-gray-800">
-            {step.name.toUpperCase()}
-          </p>
+         
           <p>{step.description || "No description available."}</p>
           {step.timeSensitiveDate && (
             <p className="text-[11px] text-gray-500">
@@ -362,9 +360,7 @@ const handleTaskLineCheckbox = (rowIndex: number) => {
       
       {step ? (
         <div className="text-left space-y-1">
-          <p className="font-semibold text-gray-800">
-            {step.name.toUpperCase()}
-          </p>
+           
           <p>{step.description || "No description available."}</p>
           {step.timeSensitiveDate && (
             <p className="text-[11px] text-gray-500">
