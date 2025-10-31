@@ -1,54 +1,21 @@
-export type StepKey =
-  | "step1"
-  | "step2"
-  | "step3"
-  | "step4"
-  | "step5"
-  | "step6"
-  | "step7"
-  | "step8"
-  | "step9"
-  | "step10" |
-  "step12"
-  | "step11";
-
-export interface Step {
-  description:string;
-  name: StepKey;
-  completed: boolean;
-  timeSensitive: boolean;
-  timeSensitiveDate: string | null;
-}
-
-export type FixedColumnKey = "category" | "vehicle" | "date1";
-
-export interface TaskRow {
-  id: string;
-  category: string;
-  vehicle: string;
-  customer: string;
-  date1: string;
-  date2: string;
-    taskLineChecked:boolean;
-
-  timeSensitiveDate: string;
-  steps: Step[]; // 👈 changed from Record<StepKey, boolean> to Step[]
-  statusTL: boolean;
-  completed: boolean;
-}
-
-export type FinalColumnKey = "statusTL" | "completed";
+import { AdminTemplate, FixedColumnKey, TaskRow } from "./types";
 
 export const sampleData: TaskRow[] = [
   {
     id: "1",
     category: "CALIBER-AARONA",
-    vehicle: "2022 Dodge Ram",
-    customer: "Cordeno",
-    date1: "2025-10-05",
-    date2: "2025-10-12",
-    taskLineChecked:false,
-    timeSensitiveDate: "2025-11-01",
+    taskLineChecked: false,
+    timeSensitiveDate: null,
+timeSensitiveColors: {
+      warning: { days: 6, color: "#FFD93D" },
+      danger: { days: 3, color: "#FF6B6B" },
+    },
+    // 🆕 Replaces vehicle, customer, date1, date2
+    otherColumns: [
+      { name: "Customer Name", type: "text" }, 
+      { name: "Inspection Date", type: "date" },
+    ],
+
     steps: [
       { name: "step1", completed: true, timeSensitive: false, timeSensitiveDate: null, description: "Verify customer details and vehicle information." },
       { name: "step2", completed: false, timeSensitive: true, timeSensitiveDate: "2025-11-03", description: "Schedule inspection before due date." },
@@ -61,7 +28,7 @@ export const sampleData: TaskRow[] = [
       { name: "step9", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Review financial charges for client." },
       { name: "step10", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Confirm shipment documentation." },
       { name: "step11", completed: true, timeSensitive: true, timeSensitiveDate: "2025-11-05", description: "Complete client satisfaction survey." },
-      { name: "step12", completed: true, timeSensitive: false, timeSensitiveDate: null, description: "Finalize case and archive report." }
+      { name: "step12", completed: true, timeSensitive: false, timeSensitiveDate: null, description: "Finalize case and archive report." },
     ],
     statusTL: false,
     completed: false,
@@ -69,13 +36,18 @@ export const sampleData: TaskRow[] = [
   {
     id: "2",
     category: "CATEGORY 2",
-    vehicle: "2018 Ford F-150",
-    customer: "Michael",
-    taskLineChecked:false,
+    taskLineChecked: false,
+      timeSensitiveDate: null,
 
-    date1: "2025-09-20",
-    date2: "2025-10-10",
-    timeSensitiveDate: "2025-10-29",
+
+    otherColumns: [
+      { name: "Customer Name", type: "text" }, 
+      { name: "Maintenance Date", type: "date" },
+    ],
+timeSensitiveColors: {
+      warning: { days: 6, color: "#FFD93D" },
+      danger: { days: 3, color: "#FF6B6B" },
+    },
     steps: [
       { name: "step1", completed: true, timeSensitive: false, timeSensitiveDate: null, description: "Collect initial service request from client." },
       { name: "step2", completed: true, timeSensitive: true, timeSensitiveDate: "2025-10-28", description: "Ensure critical maintenance is done before due date." },
@@ -94,13 +66,18 @@ export const sampleData: TaskRow[] = [
   {
     id: "3",
     category: "CATEGORY 3",
-    vehicle: "2020 Toyota Camry",
-    customer: "Ayesha",
-    date1: "2025-10-01",
-    date2: "2025-10-08",
-    taskLineChecked:false,
+    taskLineChecked: false,
+    timeSensitiveDate: null,
 
-    timeSensitiveDate: "2025-10-25",
+
+    otherColumns: [
+      { name: "Client Name", type: "text" }, 
+      { name: "Report Date", type: "date" },
+    ],
+timeSensitiveColors: {
+      warning: { days: 6, color: "#FFD93D" },
+      danger: { days: 3, color: "#FF6B6B" },
+    },
     steps: [
       { name: "step1", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Initial intake pending confirmation." },
       { name: "step2", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Verify part availability and order if needed." },
@@ -117,6 +94,158 @@ export const sampleData: TaskRow[] = [
     completed: false,
   },
 ];
+
+export const adminTemplates: AdminTemplate[] = [
+  {
+    id: "tmpl1",
+    category: "CALIBER-AARONA",
+    color: "#0070f3",
+    description: "Calibration workflow template for AARONA division vehicles.",
+
+    // 🆕 Category-level time-sensitive color mapping
+    timeSensitiveColors: {
+      warning: { days: 6, color: "#FFD93D" }, // 🟡 Yellow at 6 days
+      danger: { days: 3, color: "#FF6B6B" },  // 🔴 Red at 3 days
+    },
+
+    steps: [
+      {
+        name: "Verify Customer Info",
+        type: "text",
+        timeSensitive: false,
+        trigger: "informative",
+        info: "Ensure the customer and vehicle data match the database.",
+      },
+      {
+        name: "Schedule Inspection",
+        type: "date",
+        timeSensitive: true,
+        trigger: "reminder",
+        info: "Set inspection before due date. Turns yellow at 6 days, red at 3 days.",
+      },
+      {
+        name: "Prepare Documentation",
+        type: "check",
+        timeSensitive: false,
+        trigger: "informative",
+        info: "Confirm all documents are uploaded to the system.",
+      },
+      {
+        name: "Perform Diagnostics",
+        type: "check",
+        timeSensitive: true,
+        trigger: "popup",
+        info: "Complete full engine diagnostic before final approval.",
+      },
+      {
+        name: "Supervisor Approval",
+        type: "check",
+        timeSensitive: false,
+        trigger: "confirmation",
+        info: "Supervisor must approve this phase before proceeding.",
+      },
+    ],
+  },
+  {
+    id: "tmpl2",
+    category: "CATEGORY 2",
+    color: "#22c55e",
+    description: "Standard maintenance checklist template.",
+
+    timeSensitiveColors: {
+      warning: { days: 6, color: "#FFD93D" },
+      danger: { days: 3, color: "#FF6B6B" },
+    },
+
+    steps: [
+      {
+        name: "Collect Service Request",
+        type: "text",
+        timeSensitive: false,
+        trigger: "none",
+        info: "Record customer service request details.",
+      },
+      {
+        name: "Critical Maintenance",
+        type: "date",
+        timeSensitive: true,
+        trigger: "popup",
+        info: "Maintenance deadline triggers warning at 6/3 days.",
+      },
+      {
+        name: "Safety Review",
+        type: "check",
+        timeSensitive: false,
+        trigger: "informative",
+        info: "Review and complete safety checklist.",
+      },
+      {
+        name: "Assign Technician",
+        type: "check",
+        timeSensitive: false,
+        trigger: "none",
+        info: "Assign technician based on specialization.",
+      },
+      {
+        name: "Final QA Submission",
+        type: "check",
+        timeSensitive: true,
+        trigger: "popup",
+        info: "Must be submitted to QA before the final due date.",
+      },
+    ],
+  },
+  {
+    id: "tmpl3",
+    category: "CATEGORY 3",
+    color: "#f97316",
+    description: "Emission testing and approval workflow.",
+
+    timeSensitiveColors: {
+      warning: { days: 6, color: "#FFD93D" },
+      danger: { days: 3, color: "#FF6B6B" },
+    },
+
+    steps: [
+      {
+        name: "Intake Confirmation",
+        type: "text",
+        timeSensitive: false,
+        trigger: "informative",
+        info: "Confirm initial intake form with customer.",
+      },
+      {
+        name: "Order Parts",
+        type: "check",
+        timeSensitive: false,
+        trigger: "none",
+        info: "Order missing or required parts before next step.",
+      },
+      {
+        name: "Prepare Workshop Bay",
+        type: "check",
+        timeSensitive: false,
+        trigger: "none",
+        info: "Ensure bay and tools are ready for inspection.",
+      },
+      {
+        name: "Emission Test",
+        type: "date",
+        timeSensitive: true,
+        trigger: "popup",
+        info: "Emission testing must be completed before inspection date.",
+      },
+      {
+        name: "Final Approval",
+        type: "check",
+        timeSensitive: false,
+        trigger: "confirmation",
+        info: "Approve the final maintenance checklist.",
+      },
+    ],
+  },
+];
+
 
 export const fixedColumns: FixedColumnKey[] = ["category", "vehicle", "date1"];
 

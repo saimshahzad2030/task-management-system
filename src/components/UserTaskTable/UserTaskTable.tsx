@@ -1,12 +1,19 @@
 "use client";
 import React, { useState } from "react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { CalendarIcon } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FinalColumnKey, sampleData as initialData } from "@/global/constant";
+import { FinalColumnKey } from "@/global/types";
+import { sampleData as initialData } from "@/global/constant";
 import { fixedColumns, finalColumns } from "@/global/constant";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { toast } from "sonner";
+import AddTaskLine from "./AddTaskLine";
+import { roboto } from "@/fonts/fonts";
 
 const getRowWithMost = (data: any[], key: "timeSensitive" | "nonTimeSensitive") => {
   return data.reduce((maxRow, curr) => {
@@ -82,124 +89,315 @@ const handleTaskLineCheckbox = (rowIndex: number) => {
 };
 
   return (
-    <Card className="w-full mt-8">
+    <div className="flex flex-col items-start w-full pt-4
+    ">
+    <AddTaskLine data={data} setData={setData} />
+
+      <Card className="w-full mt-2">
       <CardHeader>
         <CardTitle>Task Progress Table</CardTitle>
       </CardHeader>
 
       <CardContent>
-          <ScrollArea className="">
-            <div className="border rounded-md w-full flex flex-row overflow-hidden ">  
-          {/* LEFT FIXED COLUMNS */}
-          <table className="table-fixed border-r bg-white z-10">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 h-[60px] min-w-[80px] border-r text-center text-sm">T/L</th>
-                {fixedColumns.map((col) => (
-                  <th key={col} className="px-4 h-[60px] min-w-[140px] border-r text-sm">
-                    {col.toUpperCase()}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((row, idx) => (
-                <tr key={idx} className="border-b">
-                  <td className={`text-center border-r w-[80px] h-[40px] ${row.taskLineChecked?"bg-red-500":"bg-white"}`}>
+    <ScrollArea className="w-full overflow-x-auto">
+  <div className="min-w-max">
+    <table className={`table-auto border-collapse border w-full ${roboto.className}`}>
+      <thead className="bg-gray-100">
+        <tr>
+          {/* Task Line Checkbox */}
+          <th className="px-1 h-[20px]  text-center  text-[11px]  ">
+            T/L
+          </th>
+
+          {/* Dynamic Other Columns */}
+          {Array.from(
+            new Set(
+              data.flatMap((d: any) =>
+                d.otherColumns.map((col: any) => col.name)
+              )
+            )
+          ).map((name) => (
+            <th
+              key={name}
+              className="   min-w-[70px]  text-[11px] px-4 text-center  "
+            >
+              {name.toUpperCase()}
+            </th>
+          ))}
+
+          {/* Time Sensitive Date */}
+          <th className="px-4 h-[50px] min-w-[160px] text-center  text-[11px]">
+            TIME SENSITIVE DATE
+          </th>
+
+          {/* Non-TimeSensitive Step Columns */}
+          {Array.from(
+            new Set(
+              data.flatMap((d: any) =>
+                d.steps
+                  .filter((s: any) => !s.timeSensitive)
+                  .map((s: any) => s.name)
+              )
+            )
+          ).map((stepName) => (
+            <th
+              key={stepName}
+              className="px-4 h-[50px] min-w-[100px] text-center text-[11px]"
+            >
+              {"Check Column"}
+            </th>
+          ))}
+
+          {/* Final Columns */}
+          {finalColumns.map((col) => (
+            <th
+              key={col}
+              className="px-4 h-[50px] min-w-[110px] text-center text-xs"
+            >
+              {col.toUpperCase()}
+            </th>
+          ))}
+        </tr>
+      </thead>
+
+      <tbody>
+        {data.map((row: any, idx: number) => (
+          <tr key={row.id} className=" ">
+             
+            <td className={`text-center    w-[80px]   ${row.taskLineChecked?"bg-red-500":"bg-white"}`}>
                     <Checkbox
                       variant={row.taskLineChecked?"default":"danger"}
                       checked={row.statusTL}
                        onCheckedChange={(v) => handleTaskLineCheckbox(idx)}
                     />
                   </td>
-                  {fixedColumns.map((col) => (
-                    <td key={col} className={ `px-4 h-[60px] w-auto border-r text-center text-xs 
-                      ${row.taskLineChecked?"text-white bg-red-500":"text-black bg-white"}`  
-                    }>
-                      {row[col]}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
 
-          {/* FIRST SCROLLABLE SECTION */}
-         
-    <table className="table-fixed w-full">
-      <thead className="bg-gray-100">
-         <tr>
-      {(() => {
-        // Gather all unique non-timeSensitive step names across all rows
-        const allNonTimeSensitiveSteps = Array.from(
-          new Set(
-            data.flatMap((d: any) =>
-              d.steps
-                .filter((s: any) => !s.timeSensitive)
-                .map((s: any) => s.name)
-            )
-          )
-        );
-
-        // Render headers
-        return allNonTimeSensitiveSteps.map((name: string) => (
-          <th
-            key={name}
-            className="px-4 h-[60px] w-[80px] border-r text-center text-sm"
-          >
-            {"Check Column"}
-          </th>
-        ));
-      })()}
-    </tr>
-      </thead>
-
-    <tbody>
-    {data.map((row: any, idx: number) => {
-      const allNonTimeSensitiveSteps = Array.from(
-        new Set(
-          data.flatMap((d: any) =>
-            d.steps
-              .filter((s: any) => !s.timeSensitive)
-              .map((s: any) => s.name)
-          )
-        )
-      );
-
-      // Map cells in the same order as headers
-      return (
-        <tr key={idx} className="border-b">
-          {allNonTimeSensitiveSteps.map((headerName) => {
-            const step = row.steps.find(
-              (s: any) => s.name === headerName && !s.timeSensitive
+            {/* Other Columns */}
+            {Array.from(
+              new Set(
+                data.flatMap((d: any) =>
+                  d.otherColumns.map((col: any) => col.name)
+                )
+              )
+            ).map((headerName) => {
+              const colObj = row.otherColumns.find(
+                (col: any) => col.name === headerName
+              );
+              return (
+                <td
+  key={headerName}
+  className={`text-center min-w-[140px]  ${
+    row.taskLineChecked
+      ? "bg-red-500 text-white"
+      : "bg-white text-gray-800"
+  }`}
+>
+  {colObj ? (
+    colObj.type === "text" ? (
+      <input
+        type="text"
+        placeholder="Enter text..."
+        className={`text-center w-full bg-transparent placeholder:italic focus:outline-none text-xs ${
+          row.taskLineChecked
+            ? "placeholder:text-gray-200 text-white  "
+            : "placeholder:text-gray-400 text-gray-800  "
+        }`}
+        value={colObj.value || ""}
+        onChange={(e) => {
+          const newValue = e.target.value;
+          setData((prev: any) => {
+            const updated = [...prev];
+            updated[idx].otherColumns = updated[idx].otherColumns.map((c: any) =>
+              c.name === colObj.name ? { ...c, value: newValue } : c
             );
+            return updated;
+          });
+        }}
+      />
+    ) : colObj.type === "date" ? (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            className={` w-full text-xs text-center py-2 bg-transparent    focus:outline-none cursor-pointer ${
+              row.taskLineChecked
+                ? "text-white italic"
+                : colObj.value
+                ? "text-gray-800"
+                : "text-gray-400 italic"
+            }`}
+          >
+            {colObj.value || "Select date..."}
+          </button>
+        </PopoverTrigger>
 
-            return (
-              <td
-                key={headerName}
-                className={`text-center border-r py-2 w-[80px] h-[80px] ${row.taskLineChecked?"bg-red-500":"bg-white"}`}
+        <PopoverContent className="w-auto p-0" align="center">
+          <Calendar
+            mode="single"
+            selected={
+              colObj.value ? new Date(colObj.value) : undefined
+            }
+            onSelect={(date) => {
+              if (!date) return;
+              // ✅ Convert to local YYYY-MM-DD to avoid timezone shifts
+              const yyyy = date.getFullYear();
+              const mm = String(date.getMonth() + 1).padStart(2, "0");
+              const dd = String(date.getDate()).padStart(2, "0");
+              const formatted = `${yyyy}-${mm}-${dd}`;
+
+              setData((prev: any) => {
+                const updated = [...prev];
+                updated[idx].otherColumns = updated[idx].otherColumns.map(
+                  (c: any) =>
+                    c.name === colObj.name
+                      ? { ...c, value: formatted }
+                      : c
+                );
+                return updated;
+              });
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+    ) : (
+      <span className="text-gray-400">—</span>
+    )
+  ) : (
+    <span className="text-gray-400">-</span>
+  )}
+</td>
+
+              );
+            })}
+
+            {/* Time Sensitive Date */}
+           <td
+  className={cn(
+    "text-center min-w-[160px] cursor-pointer relative transition-colors duration-200",
+    row.taskLineChecked ? "bg-red-500 text-white" : "bg-white text-gray-800"
+  )}
+>
+  <Popover>
+    <PopoverTrigger asChild>
+      {(() => {
+        // --- Determine background color ---
+        let bgColor = "transparent";
+        if (!row.taskLineChecked && row.timeSensitiveDate) {
+          const today = new Date();
+          const due = new Date(row.timeSensitiveDate);
+          const diffDays = Math.ceil(
+            (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+          );
+
+          const { warning, danger } = row.timeSensitiveColors || {};
+          if (danger && diffDays <= danger.days) bgColor = danger.color;
+          else if (warning && diffDays <= warning.days) bgColor = warning.color;
+        }
+
+        // --- Compute luminance to choose contrasting text color ---
+        const hex = bgColor.replace("#", "");
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        const textColor = luminance > 0.6 ? "#000" : "#fff"; // light bg → black text, dark bg → white text
+
+        return (
+          <div
+            className={cn(
+              "w-full text-xs text-center py-2 bg-transparent focus:outline-none cursor-pointer rounded-md italic"
+            )}
+           
+          >
+            {row.timeSensitiveDate ? (
+              <span
+               style={{
+                padding:'4px',
+              backgroundColor: bgColor,
+              color: row.taskLineChecked
+                ? "white"
+                : row.timeSensitiveDate
+                ? textColor
+                : "gray",
+            }}
+              className="font-medium not-italic">
+                {row.timeSensitiveDate}
+              </span>
+            ) : (
+              <span className="text-gray-400 italic">Select date...</span>
+            )}
+          </div>
+        );
+      })()}
+    </PopoverTrigger>
+
+    <PopoverContent className="p-0 w-auto" align="center">
+      <Calendar
+        mode="single"
+        selected={
+          row.timeSensitiveDate ? new Date(row.timeSensitiveDate) : undefined
+        }
+        onSelect={(date) => {
+          setData((prev: any) => {
+            const updated = [...prev];
+            if (date) {
+              const localDate = new Date(
+                date.getTime() - date.getTimezoneOffset() * 60000
+              )
+                .toISOString()
+                .split("T")[0];
+              updated[idx].timeSensitiveDate = localDate;
+            }
+            return updated;
+          });
+        }}
+        initialFocus
+      />
+    </PopoverContent>
+  </Popover>
+</td>
+
+
+
+            {/* Non-time-sensitive steps */}
+            {Array.from(
+              new Set(
+                data.flatMap((d: any) =>
+                  d.steps
+                    .filter((s: any) => !s.timeSensitive)
+                    .map((s: any) => s.name)
+                )
+              )
+            ).map((stepName) => {
+              const step = row.steps.find(
+                (s: any) => s.name === stepName && !s.timeSensitive
+              );
+              return (
+                <td
+                key={stepName}
+                className={`text-center    py-1 w-[80px] h-[9px] ${row.taskLineChecked?"bg-red-500":step ?step.completed?"bg-green-500":"bg-white":""}`}
               >
-                <TooltipProvider>
+                {!row.taskLineChecked ?
+                 <TooltipProvider>
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="flex flex-col items-center justify-center h-full cursor-pointer">
           {step ? (
             <>
               <Checkbox
-                variant="success"
+                variant={step.completed?"white":"success"}
                 checked={step.completed}
                 onCheckedChange={(v) =>
                   handleCheckbox(idx, step.name, v)
                 }
               />
               {step.timeSensitiveDate && (
-                <div className="text-[10px] text-gray-500 mt-1">
+                <div className=" text-[11px] text-gray-500 mt-1">
                   {step.timeSensitiveDate}
                 </div>
               )}
             </>
           ) : (
-            <span className={` ${row.taskLineChecked?"text-gray-200 ":"text-gray-400 "}text-xs`}>—</span>
+            <span className={` ${row.taskLineChecked?"text-gray-200 ":"text-gray-400 "}text-xs`}>-</span>
           )}
         </div>
       </TooltipTrigger>
@@ -237,199 +435,40 @@ const handleTaskLineCheckbox = (rowIndex: number) => {
           : "No additional details available"}
       </TooltipContent>
     </Tooltip>
-  </TooltipProvider>
+  </TooltipProvider>:
+  <p className="my-4"></p>
+               }
               </td>
-            );
-          })}
-        </tr>
-      );
-    })}
-  </tbody>
+            
+              );
+            })}
+
+            {/* Final Columns */}
+            {finalColumns.map((col) => (
+              <td
+                key={col}
+                className={`text-center min-w-[110px] ${
+                  row.taskLineChecked ? "bg-red-500" : "bg-white"
+                }`}
+              >
+                <Checkbox
+                  checked={row[col as FinalColumnKey]}
+                  onCheckedChange={(v) =>
+                    handleFinalCheckbox(idx, col as FinalColumnKey, v)
+                  }
+                />
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
     </table>
-   
+  </div>
+  <ScrollBar orientation="horizontal" />
+</ScrollArea>
 
-
-          {/* TIME SENSITIVE DATE (fixed small block) */}
-          <table className="table-fixed border-r bg-white z-10">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="min-w-[160px] border-r border-l text-center text-sm h-[60px]">
-                  Time Sensitive Date
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((row, idx) => (
-                <tr key={idx} className="border-b">
-                  <td className={`text-center border-r border-l w-[80px] h-[40px] text-xs
-                  ${row.taskLineChecked?"text-white bg-red-500":"text-black bg-white"}`  
-                    }>
-                    {row.timeSensitiveDate}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* SECOND SCROLLABLE SECTION */}
-          
-              <table className="table-fixed w-full">
-                <thead className="bg-gray-100">
-                     <tr>
-      {(() => {
-        // Get all unique timeSensitive step names from all rows
-        const allTimeSensitiveSteps = Array.from(
-          new Set(
-            data.flatMap((d: any) =>
-              d.steps
-                .filter((s: any) => s.timeSensitive)
-                .map((s: any) => s.name)
-            )
-          )
-        );
-
-        // Render header cells
-        return allTimeSensitiveSteps.map((name: string) => (
-          <th
-            key={name}
-            className="px-4 h-[60px] w-[80px] border-r text-center text-sm"
-          >
-            {"Check Column"}
-          </th>
-        ));
-      })()}
-    </tr>
-                  
-                </thead>
-             <tbody>
-    {data.map((row: any, idx: number) => {
-      // Keep same order for all rows as thead
-      const allTimeSensitiveSteps = Array.from(
-        new Set(
-          data.flatMap((d: any) =>
-            d.steps
-              .filter((s: any) => s.timeSensitive)
-              .map((s: any) => s.name)
-          )
-        )
-      );
-
-      return (
-        <tr key={idx} className="border-b">
-          {allTimeSensitiveSteps.map((headerName) => {
-            const step = row.steps.find(
-              (s: any) => s.name === headerName && s.timeSensitive
-            );
-
-            return (
-              <TooltipProvider>
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <td
-        key={headerName}
-        
-        className={`text-center border-r py-2 w-[80px] h-[80px] cursor-pointer   
-           ${row.taskLineChecked?"bg-red-500":"bg-white"}
-          `}
-      >
-        {step ? (
-          <>
-            <Checkbox
-              variant="success"
-              checked={step.completed}
-              onCheckedChange={(v) =>
-                handleCheckbox(idx, step.name, v)
-              }
-            />
-            {step.timeSensitiveDate && (
-              <div className={`text-[10px]  mt-1 ${row.taskLineChecked?"text-white":"text-gray-500"}`}>
-                {step.timeSensitiveDate}
-              </div>
-            )}
-          </>
-        ) : (
-          <span className="text-gray-400 text-xs">—</span>
-        )}
-      </td>
-    </TooltipTrigger>
-
-    <TooltipContent
-      side="top"
-      className="max-w-[220px] text-xs p-3 bg-white shadow-md rounded-md border text-gray-700"
-    >
-      
-      {step ? (
-        <div className="text-left space-y-1">
-           
-          <p>{step.description || "No description available."}</p>
-          {step.timeSensitiveDate && (
-            <p className="text-[11px] text-gray-500">
-              Due: {step.timeSensitiveDate}
-            </p>
-          )}
-          <div className="flex flexx-row items-center ">
-            <p
-            className={`text-[11px] text-gray-500`}
-          >
-            Status:  
-          </p>
-          <p
-            className={`text-[11px] ml-1 ${
-              step.completed ? "text-green-600" : "text-red-500"
-            }`}
-          >
-             {step.completed ? " Completed" : "Pending"}
-          </p>
-          </div>
-        </div>
-      ) : (
-        <p className="text-gray-400 text-center">No data</p>
-      )}
-    </TooltipContent>
-  </Tooltip>
-</TooltipProvider>
-            );
-          })}
-        </tr>
-      );
-    })}
-  </tbody>
-              </table>
-              
-
-          {/* RIGHT FIXED FINAL COLUMNS */}
-          <table className="table-fixed border-l bg-white">
-            <thead className="bg-gray-100">
-              <tr>
-                {finalColumns.map((col) => (
-                  <th key={col} className="px-4 h-[60px] w-[110px] border-r text-center text-sm">
-                    {col.toUpperCase()}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((row, idx) => (
-                <tr key={idx} className="border-b">
-                  {finalColumns.map((col) => (
-                    <td key={col} className={`text-center min-h-[40px] ${row.taskLineChecked?"bg-red-500":"bg-white"}`}>
-                      <Checkbox
-                        checked={row[col as FinalColumnKey]}
-                        onCheckedChange={(v) =>
-                          handleFinalCheckbox(idx, col as FinalColumnKey, v)
-                        }
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-     
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
       </CardContent>
     </Card>
+    </div>
   );
 }

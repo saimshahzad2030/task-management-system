@@ -14,10 +14,13 @@ const checkboxVariants = cva(
     variants: {
       variant: {
      default:
-  "border-input dark:bg-input/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary [&_[data-slot=checkbox-indicator]]:data-[state=checked]:text-white",
+  "border-input dark:bg-input/30 data-[state=checked]:bg-primary data-[state=checked]:border-white [&_[data-slot=checkbox-indicator]]:data-[state=checked]:text-white",
   success:
           "border-green-500 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-600 data-[state=checked]:text-white",
-        danger:
+       white:
+          "border-green-500 data-[state=checked]:bg-green-800 data-[state=checked]:border-white data-[state=checked]:text-white",
+       
+          danger:
           "border-red-500 data-[state=checked]:bg-red-600 data-[state=checked]:text-white",
         warning:
           "border-yellow-400 data-[state=checked]:bg-yellow-400 data-[state=checked]:text-black",
@@ -26,7 +29,7 @@ const checkboxVariants = cva(
       },
       size: {
         sm: "size-4",
-        md: "size-5",
+        md: "size-3",
         lg: "size-6",
       },
     },
@@ -52,11 +55,11 @@ export function Checkbox({ className, variant, size, ...props }: CheckboxProps) 
         data-slot="checkbox-indicator"
         className="grid place-content-center text-current transition-none"
       >
-        <CheckIcon
+        {/* <CheckIcon
           className={cn(
             size === "lg" ? "size-5" : size === "sm" ? "size-3.5" : "size-4"
           )}
-        />
+        /> */}
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );

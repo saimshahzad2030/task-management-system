@@ -6,10 +6,10 @@ const UserTaskHeader = () => {
   return (
       <div className='flex flex-row items-center '>
             <h1 className='text-5xl'>LOGO</h1>
-            <Button variant={'customNormal'} className='ml-2' size={'customNormalSize'}>
+            {/* <Button variant={'customNormal'} className='ml-2' size={'customNormalSize'}>
                 <Plus/>
                 New
-            </Button>
+            </Button> */}
         </div>
   )
 }
