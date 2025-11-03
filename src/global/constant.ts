@@ -6,29 +6,123 @@ export const sampleData: TaskRow[] = [
     category: "CALIBER-AARONA",
     taskLineChecked: false,
     timeSensitiveDate: null,
-timeSensitiveColors: {
+    timeSensitiveColors: {
       warning: { days: 6, color: "#FFD93D" },
       danger: { days: 3, color: "#FF6B6B" },
     },
-    // 🆕 Replaces vehicle, customer, date1, date2
     otherColumns: [
-      { name: "Customer Name", type: "text" }, 
+      { name: "Customer Name", type: "text" },
       { name: "Inspection Date", type: "date" },
     ],
-
     steps: [
-      { name: "step1", completed: true, timeSensitive: false, timeSensitiveDate: null, description: "Verify customer details and vehicle information." },
-      { name: "step2", completed: false, timeSensitive: true, timeSensitiveDate: "2025-11-03", description: "Schedule inspection before due date." },
-      { name: "step3", completed: true, timeSensitive: false, timeSensitiveDate: null, description: "Prepare service documentation." },
-      { name: "step4", completed: true, timeSensitive: true, timeSensitiveDate: "2025-11-05", description: "Perform engine diagnostic and log results." },
-      { name: "step5", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Awaiting supervisor approval for next phase." },
-      { name: "step6", completed: true, timeSensitive: true, timeSensitiveDate: "2025-11-05", description: "Finalize calibration and update report." },
-      { name: "step7", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Pending quality assurance check." },
-      { name: "step8", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Awaiting delivery slot confirmation." },
-      { name: "step9", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Review financial charges for client." },
-      { name: "step10", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Confirm shipment documentation." },
-      { name: "step11", completed: true, timeSensitive: true, timeSensitiveDate: "2025-11-05", description: "Complete client satisfaction survey." },
-      { name: "step12", completed: true, timeSensitive: false, timeSensitiveDate: null, description: "Finalize case and archive report." },
+      {
+        id: 1,
+        name: "step1",
+        completed: false,
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        triggerType:'popup',
+        popup:{description:"Don't forget to provide report to hr team"},
+        description: "Verify customer details and vehicle information.",
+      },
+      {
+        id: 2,
+        name: "step2",
+        completed: false,
+        timeSensitive: true,
+        timeSensitiveDate: "2025-11-03",
+        description: "Schedule inspection before due date.",
+        triggerType: "popup",
+        popup: { description: "Popup shown for inspection scheduling." },
+      },
+      {
+        id: 3,
+        name: "step3",
+        completed: true,
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Prepare service documentation.",
+      },
+      {
+        id: 4,
+        name: "step4",
+        completed: false,
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Perform engine diagnostic and log results.",
+        triggerType: "relation",
+        linkedStep: {
+          id: 3,
+          requiredThings: [{ description: "Service documentation ready" }],
+        },
+      },
+      {
+        id: 5,
+        name: "step5",
+        completed: true, // ✅ triggerType not present → default true
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Awaiting supervisor approval for next phase.",
+      },
+      {
+        id: 6,
+        name: "step6",
+        completed: false,
+        timeSensitive: true,
+        timeSensitiveDate: "2025-11-05",
+        description: "Finalize calibration and update report.",
+        triggerType: "completed",
+      },
+      {
+        id: 7,
+        name: "step7",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Pending quality assurance check.",
+      },
+      {
+        id: 8,
+        name: "step8",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Awaiting delivery slot confirmation.",
+      },
+      {
+        id: 9,
+        name: "step9",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Review financial charges for client.",
+      },
+      {
+        id: 10,
+        name: "step10",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Confirm shipment documentation.",
+      },
+      {
+        id: 11,
+        name: "step11",
+        completed: false,
+        timeSensitive: true,
+        timeSensitiveDate: "2025-11-05",
+        description: "Complete client satisfaction survey.",
+        triggerType: "popup",
+        popup: { description: "Survey popup before completion." },
+      },
+      {
+        id: 12,
+        name: "step12",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Finalize case and archive report.",
+      },
     ],
     statusTL: false,
     completed: false,
@@ -37,28 +131,99 @@ timeSensitiveColors: {
     id: "2",
     category: "CATEGORY 2",
     taskLineChecked: false,
-      timeSensitiveDate: null,
-
-
-    otherColumns: [
-      { name: "Customer Name", type: "text" }, 
-      { name: "Maintenance Date", type: "date" },
-    ],
-timeSensitiveColors: {
+    timeSensitiveDate: null,
+    timeSensitiveColors: {
       warning: { days: 6, color: "#FFD93D" },
       danger: { days: 3, color: "#FF6B6B" },
     },
+    otherColumns: [
+      { name: "Customer Name", type: "text" },
+      { name: "Maintenance Date", type: "date" },
+    ],
     steps: [
-      { name: "step1", completed: true, timeSensitive: false, timeSensitiveDate: null, description: "Collect initial service request from client." },
-      { name: "step2", completed: true, timeSensitive: true, timeSensitiveDate: "2025-10-28", description: "Ensure critical maintenance is done before due date." },
-      { name: "step3", completed: true, timeSensitive: false, timeSensitiveDate: null, description: "Review safety checklist." },
-      { name: "step4", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Pending technician assignment." },
-      { name: "step5", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Awaiting parts delivery from supplier." },
-      { name: "step6", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Inspect and verify part compatibility." },
-      { name: "step7", completed: true, timeSensitive: true, timeSensitiveDate: "2025-11-05", description: "Submit final service report to QA team." },
-      { name: "step8", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Pending billing verification." },
-      { name: "step9", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Collect payment confirmation." },
-      { name: "step10", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Notify customer of service completion." },
+      {
+        id: 1,
+        name: "step1",
+        completed: true,
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Collect initial service request from client.",
+      },
+      {
+        id: 2,
+        name: "step2",
+        completed: false,
+        timeSensitive: true,
+        timeSensitiveDate: "2025-10-28",
+        description: "Ensure critical maintenance is done before due date.",
+        triggerType: "popup",
+        popup: { description: "Maintenance alert popup." },
+      },
+      {
+        id: 3,
+        name: "step3",
+        completed: true,
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Review safety checklist.",
+      },
+      {
+        id: 4,
+        name: "step4",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Pending technician assignment.",
+      },
+      {
+        id: 5,
+        name: "step5",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Awaiting parts delivery from supplier.",
+      },
+      {
+        id: 6,
+        name: "step6",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Inspect and verify part compatibility.",
+      },
+      {
+        id: 7,
+        name: "step7",
+        completed: false,
+        timeSensitive: true,
+        timeSensitiveDate: "2025-11-05",
+        description: "Submit final service report to QA team.",
+        triggerType: "completed",
+      },
+      {
+        id: 8,
+        name: "step8",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Pending billing verification.",
+      },
+      {
+        id: 9,
+        name: "step9",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Collect payment confirmation.",
+      },
+      {
+        id: 10,
+        name: "step10",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Notify customer of service completion.",
+      },
     ],
     statusTL: false,
     completed: true,
@@ -68,27 +233,97 @@ timeSensitiveColors: {
     category: "CATEGORY 3",
     taskLineChecked: false,
     timeSensitiveDate: null,
-
-
-    otherColumns: [
-      { name: "Client Name", type: "text" }, 
-      { name: "Report Date", type: "date" },
-    ],
-timeSensitiveColors: {
+    timeSensitiveColors: {
       warning: { days: 6, color: "#FFD93D" },
       danger: { days: 3, color: "#FF6B6B" },
     },
+    otherColumns: [
+      { name: "Client Name", type: "text" },
+      { name: "Report Date", type: "date" },
+    ],
     steps: [
-      { name: "step1", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Initial intake pending confirmation." },
-      { name: "step2", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Verify part availability and order if needed." },
-      { name: "step3", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Prepare workshop bay for vehicle inspection." },
-      { name: "step4", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Awaiting mechanic assignment." },
-      { name: "step5", completed: true, timeSensitive: true, timeSensitiveDate: "2025-10-24", description: "Conduct emission testing and report results." },
-      { name: "step6", completed: true, timeSensitive: false, timeSensitiveDate: null, description: "Approve final maintenance checklist." },
-      { name: "step7", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Schedule customer follow-up." },
-      { name: "step8", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Invoice preparation in progress." },
-      { name: "step9", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Awaiting internal review approval." },
-      { name: "step10", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Finalize and close the work order." },
+      {
+        id: 1,
+        name: "step1",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Initial intake pending confirmation.",
+      },
+      {
+        id: 2,
+        name: "step2",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Verify part availability and order if needed.",
+      },
+      {
+        id: 3,
+        name: "step3",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Prepare workshop bay for vehicle inspection.",
+      },
+      {
+        id: 4,
+        name: "step4",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Awaiting mechanic assignment.",
+      },
+      {
+        id: 5,
+        name: "step5",
+        completed: false,
+        timeSensitive: true,
+        timeSensitiveDate: "2025-10-24",
+        description: "Conduct emission testing and report results.",
+        triggerType: "popup",
+        popup: { description: "Emission testing form popup." },
+      },
+      {
+        id: 6,
+        name: "step6",
+        completed: true,
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Approve final maintenance checklist.",
+      },
+      {
+        id: 7,
+        name: "step7",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Schedule customer follow-up.",
+      },
+      {
+        id: 8,
+        name: "step8",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Invoice preparation in progress.",
+      },
+      {
+        id: 9,
+        name: "step9",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Awaiting internal review approval.",
+      },
+      {
+        id: 10,
+        name: "step10",
+        completed: true, // ✅ no triggerType
+        timeSensitive: false,
+        timeSensitiveDate: null,
+        description: "Finalize and close the work order.",
+      },
     ],
     statusTL: false,
     completed: false,

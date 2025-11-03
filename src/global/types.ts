@@ -42,7 +42,7 @@ export interface AdminTemplate {
   };
   steps: Omit<Step, "completed" | "timeSensitiveDate">[];
 }
-
+ 
 // User-created task line (based on admin template)
 export interface TaskRow {
   id: string;
@@ -59,11 +59,17 @@ export interface TaskRow {
     value?:string;
   }[];
   steps: {
+    id?:number;
     name: string;
     completed: boolean;
     timeSensitive: boolean;
     timeSensitiveDate: string | null;
     description: string;
+    triggerType?:"popup" | "relation" | "completed"
+    popup?:{description:string}
+    linkedStep?:{id:number,
+      requiredThings:{description:string}[]
+    }
   }[];
   statusTL: boolean;
   completed: boolean;

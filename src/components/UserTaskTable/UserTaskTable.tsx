@@ -4,7 +4,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, HelpCircle } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FinalColumnKey } from "@/global/types";
@@ -14,6 +14,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { toast } from "sonner";
 import AddTaskLine from "./AddTaskLine";
 import { roboto } from "@/fonts/fonts";
+import { Button } from "../ui/button";
+import HeaderDetails from "./HeaderDetails";
 
 const getRowWithMost = (data: any[], key: "timeSensitive" | "nonTimeSensitive") => {
   return data.reduce((maxRow, curr) => {
@@ -33,22 +35,118 @@ export default function UserTaskTable() {
   // Since steps is now an array of objects, we extract their names for headers
   const stepColumns = data[0]?.steps.map((s: any) => s.name) || [];
 
-  const handleCheckbox = (
-    rowIndex: number,
-    stepName: string,
-    value: boolean | "indeterminate"
-  ) => {
-    setData((prev) => {
-      const updated = [...prev];
-      updated[rowIndex].steps = updated[rowIndex].steps.map((step: any) =>
-        step.name === stepName
-          ? { ...step, completed: value === true }
-          : step
-      );
-      return updated;
-    });
-  };
+  
+ 
+  
+const handleCheckbox = (
+  rowIndex: number,
+  stepName: string,
+  value: boolean | "indeterminate"
+) => {
+  setData((prev) => {
+    const updated = [...prev];
+    const step = updated[rowIndex].steps.find((s) => s.name === stepName);
 
+    if (!step) return prev; // safety check
+
+    // ✅ If already completed, show notice
+    if (step.completed) {
+      toast.custom((t) => (
+        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[300px]">
+          <p className="text-gray-800 text-sm mb-3">
+            This step is already marked as completed.
+          </p>
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              onClick={() => toast.dismiss(t)}
+              variant="outline"
+            >
+              OK
+            </Button>
+          </div>
+        </div>
+      ));
+      return prev;
+    }
+
+    // ✅ If triggerType is "completed", mark directly
+    if (step.triggerType === "completed") {
+      step.completed = value === true;
+      return updated;
+    }
+
+    // ✅ If triggerType is "popup", show confirmation toast
+    if (step.triggerType === "popup") {
+      toast.custom((t) => (
+        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[320px]">
+          <p className="text-gray-800 text-sm mb-3">
+            {step.popup?.description || "Please confirm this action."}
+          </p>
+          <div className="flex justify-end space-x-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => toast.dismiss(t)} // cancel
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                setData((prev2) => {
+                  const updated2 = [...prev2];
+                  updated2[rowIndex].steps = updated2[rowIndex].steps.map((s) =>
+                    s.name === stepName ? { ...s, completed: true } : s
+                  );
+                  return updated2;
+                });
+                toast.dismiss(t);
+                toast.success("Step marked as completed!");
+              }}
+            >
+              OK
+            </Button>
+          </div>
+        </div>
+      ));
+      return prev;
+    }
+
+    // ✅ If triggerType is "relation" or undefined, no action for now
+    return prev;
+  });
+};
+
+  // const handleCheckbox = (
+  //   rowIndex: number,
+  //   stepName: string,
+  //   value: boolean | "indeterminate"
+  // ) => {
+  //   setData((prev) => {
+  //     const updated = [...prev];
+  //     updated[rowIndex].steps = updated[rowIndex].steps.map((step: any) =>
+  //       step.name === stepName
+  //         ? { ...step, completed: value === true }
+  //         : step
+  //     );
+  //     return updated;
+  //   });
+  // };
+
+
+  // const handleHelpClick = (headerTitle: string, description: string) => {
+  //   toast(headerTitle, {
+  //     description,
+  //     action: {
+  //       label: "Copy",
+  //       onClick: () => {
+  //         navigator.clipboard.writeText(description);
+  //         toast.success("Copied to clipboard!");
+  //       },
+  //     },
+  //   });
+  // };
  const handleFinalCheckbox = (
   rowIndex: number,
   col: FinalColumnKey,
@@ -102,8 +200,8 @@ const handleTaskLineCheckbox = (rowIndex: number) => {
     <ScrollArea className="w-full overflow-x-auto">
   <div className="min-w-max">
     <table className={`table-auto border-collapse border w-full ${roboto.className}`}>
-      <thead className="bg-gray-100">
-        <tr>
+      <thead className="bg-gray-100 overflow-y-visible">
+        <tr className=" overflow-y-visible">
           {/* Task Line Checkbox */}
           <th className="px-1 h-[20px]  text-center  text-[11px]  ">
             T/L
@@ -141,11 +239,30 @@ const handleTaskLineCheckbox = (rowIndex: number) => {
             )
           ).map((stepName) => (
             <th
+             onClick={() => HeaderDetails("", "Hello, This is an email i want you to use for customers copy it from here. and edit it how you would like before sending it off")}
               key={stepName}
-              className="px-4 h-[50px] min-w-[100px] text-center text-[11px]"
+              className="cursor-pointer px-4 h-[50px] min-w-[100px] text-center text-[11px]"
             >
               {"Check Column"}
             </th>
+  //          <th
+  //   key={stepName}
+  //   className="px-4 py-2 text-center text-sm relative group overflow-visible" // ✅ added overflow-visible
+  // > 
+  //   <Button
+  //     variant="ghost"
+  //     size="icon"
+  //     onClick={() => handleHelpClick("h.title", "h.info")}
+  //     className="absolute -top-10 left-1/2 -translate-x-1/2 h-5 w-5 p-0 text-gray-400 hover:text-gray-700 z-10"
+  //   >
+  //     <HelpCircle size={14} />
+  //   </Button>
+
+  //   {/* Header text */}
+  //   <div className="className="px-4 h-[50px] min-w-[100px] text-center text-[11px]"">
+  //     Check Column
+  //   </div>
+  // </th>
           ))}
 
           {/* Final Columns */}
@@ -299,7 +416,15 @@ const handleTaskLineCheckbox = (rowIndex: number) => {
         const g = parseInt(hex.substring(2, 4), 16);
         const b = parseInt(hex.substring(4, 6), 16);
         const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        const textColor = luminance > 0.6 ? "#000" : "#fff"; // light bg → black text, dark bg → white text
+      let textColor = "#000"; // default
+if (bgColor && bgColor.startsWith("#")) {
+  const hex = bgColor.replace("#", "");
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  textColor = luminance > 0.6 ? "#000" : "#fff";
+}
 
         return (
           <div
