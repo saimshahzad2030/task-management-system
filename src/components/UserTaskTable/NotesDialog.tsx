@@ -25,7 +25,7 @@ export default function NotesDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>Add Notes for: {stepName}</DialogTitle>
+          <DialogTitle>Add Notes </DialogTitle>
         </DialogHeader>
 
         <Input
