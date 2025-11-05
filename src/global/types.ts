@@ -65,6 +65,7 @@ export interface TaskRow {
     markedNext?: boolean;
     completed: boolean;
     timeSensitive: boolean;
+    notes?:string;
     timeSensitiveDate: string | null;
     description: string;
     triggerType:"popup" | "relation" | "completed"

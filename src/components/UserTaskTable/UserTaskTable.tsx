@@ -17,7 +17,7 @@ import { roboto } from "@/fonts/fonts";
 import { Button } from "../ui/button";
 import HeaderDetails from "./HeaderDetails";
 import getContrastText from "@/utils/getContrast";
-import { Flag, QuestionMark } from "@/global/icons";
+import { Flag, MarkedNotes, QuestionMark } from "@/global/icons";
 import { Switch } from "../ui/switch";
 import TaskSorter from "./TaskSorter";
 import {
@@ -33,10 +33,42 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable"; 
 import DraggableRow from "./DraggableRow";
+import NotesDialog from "./NotesDialog";
+ 
 
+ 
 
 export default function UserTaskTable() {
   const [data, setData] = useState(initialData);
+  const [notesPopup, setNotesPopup] = useState({
+  open: false,
+  stepName: "",
+  rowIndex: null as number | null,
+  value: ""
+});
+ 
+const saveNotes = () => {
+  if (notesPopup.rowIndex === null) return;
+
+  setData(prev => {
+    const updated = [...prev];
+
+    const index = notesPopup.rowIndex as number; // ✅ safe assertion
+
+    updated[index].steps = updated[index].steps.map(step =>
+      step.name === notesPopup.stepName
+        ? { ...step, notes: notesPopup.value }
+        : step
+    );
+
+    return updated;
+  });
+
+  setNotesPopup(prev => ({ ...prev, open: false }));
+  toast.success("Notes Updated")
+};
+
+
   const sensors = useSensors(
   useSensor(PointerSensor, {
     activationConstraint: { distance: 5 },
@@ -605,8 +637,20 @@ if (bgColor && bgColor.startsWith("#")) {
               );
               return (
                 <td
+
                 key={stepName}
-                className={`text-center    py-1 w-[80px] h-[9px] 
+              onContextMenu={(e) => {
+    e.preventDefault();
+    if (step) {
+      setNotesPopup({
+        open: true, 
+        rowIndex:idx,
+        stepName: step.name,
+        value: step.notes || ""
+      });
+    }
+  }}
+                className={`relative text-center    py-1 w-[80px] h-[9px] 
                   ${row.taskLineChecked?"bg-red-600":step ?step.completed?"bg-lime-500":
                   step.markedNext?
                   "bg-yellow-300"
@@ -614,6 +658,10 @@ if (bgColor && bgColor.startsWith("#")) {
                   :""}
                   `}
               >
+               {step?.notes &&  <div className="absolute flex flex-row items-center justify-end   top-0 right-0 ">
+                  <MarkedNotes/>
+                </div>}
+                 
                 {!row.taskLineChecked ?
                  <TooltipProvider>
     <Tooltip>
@@ -711,6 +759,15 @@ if (bgColor && bgColor.startsWith("#")) {
 
       </CardContent>
     </Card>
+    <NotesDialog
+  open={notesPopup.open}
+  stepName={notesPopup.stepName}
+  value={notesPopup.value}
+  onChange={(v) => setNotesPopup(prev => ({ ...prev, value: v }))}
+  onClose={() => setNotesPopup(prev => ({ ...prev, open: false }))}
+  onSave={saveNotes}
+/>
+
     </div>
   );
 }
