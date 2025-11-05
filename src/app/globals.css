@@ -122,3 +122,8 @@
   }
 }
 
+
+.input-with-dynamic-placeholder::placeholder {
+  color: var(--placeholder-color);
+  opacity: 1; /* required for Safari */
+}

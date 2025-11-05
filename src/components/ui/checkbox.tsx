@@ -16,12 +16,18 @@ const checkboxVariants = cva(
      default:
   "border-input dark:bg-input/30 data-[state=checked]:bg-primary data-[state=checked]:border-white [&_[data-slot=checkbox-indicator]]:data-[state=checked]:text-white",
   success:
-          "border-green-500 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-600 data-[state=checked]:text-white",
+          " border-black data-[state=checked]:bg-green-500 data-[state=checked]:border-black data-[state=checked]:text-white",
        white:
-          "border-green-500 data-[state=checked]:bg-green-800 data-[state=checked]:border-white data-[state=checked]:text-white",
-       
+          "  bg-white border-black data-[state=checked]:bg-emerald-900 data-[state=checked]:border-black data-[state=checked]:text-white",
+      yellow: `
+  bg-white
+  border-black
+  data-[state=checked]:bg-yellow-500
+  data-[state=checked]:border-yellow-600
+  data-[state=checked]:text-white
+`,
           danger:
-          "border-red-500 data-[state=checked]:bg-red-600 data-[state=checked]:text-white",
+          "border-2  border-red-500 data-[state=checked]:bg-red-600 data-[state=checked]:text-white",
         warning:
           "border-yellow-400 data-[state=checked]:bg-yellow-400 data-[state=checked]:text-black",
         info:

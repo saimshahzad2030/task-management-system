@@ -46,6 +46,7 @@ export interface AdminTemplate {
 // User-created task line (based on admin template)
 export interface TaskRow {
   id: string;
+    color: string;
   category: string;
   taskLineChecked: boolean;
   timeSensitiveDate: string | null;
@@ -61,17 +62,27 @@ export interface TaskRow {
   steps: {
     id?:number;
     name: string;
+    markedNext?: boolean;
     completed: boolean;
     timeSensitive: boolean;
     timeSensitiveDate: string | null;
     description: string;
-    triggerType?:"popup" | "relation" | "completed"
+    triggerType:"popup" | "relation" | "completed"
     popup?:{description:string}
     linkedStep?:{id:number,
-      requiredThings:{description:string}[]
+      requiredThings:{description:string}[],
+      futureColumnThings?:{
+        needed:boolean;
+        description:string;
+      }[]
     }
   }[];
   statusTL: boolean;
   completed: boolean;
 }
 
+export type FlagProps = { 
+  checked:boolean;
+   onToggle: (value: boolean) => void;
+  color?: string; // ✅ custom color support
+};

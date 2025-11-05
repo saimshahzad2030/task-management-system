@@ -54,6 +54,7 @@ const handleAddTaskLine = () => {
     category: selectedTemplate.category,
     taskLineChecked: false,
     timeSensitiveDate: null,
+    color: selectedTemplate.color,
     otherColumns: dynamicOtherColumns,
     steps: selectedTemplate.steps.map((s) => ({
       name: s.name,
@@ -61,6 +62,7 @@ const handleAddTaskLine = () => {
       timeSensitive: s.timeSensitive,
       timeSensitiveDate: s.timeSensitive ? "" : null,
       description: s.info || "",
+      triggerType:'completed'
     })),
     statusTL: false,
     completed: false,

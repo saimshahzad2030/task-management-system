@@ -3,6 +3,7 @@ import { AdminTemplate, FixedColumnKey, TaskRow } from "./types";
 export const sampleData: TaskRow[] = [
   {
     id: "1",
+    color: "#0070f3",
     category: "CALIBER-AARONA",
     taskLineChecked: false,
     timeSensitiveDate: null,
@@ -21,8 +22,8 @@ export const sampleData: TaskRow[] = [
         completed: false,
         timeSensitive: false,
         timeSensitiveDate: null,
-        triggerType:'popup',
-        popup:{description:"Don't forget to provide report to hr team"},
+        triggerType: "popup",
+        popup: { description: "Don't forget to provide report to hr team" },
         description: "Verify customer details and vehicle information.",
       },
       {
@@ -38,10 +39,11 @@ export const sampleData: TaskRow[] = [
       {
         id: 3,
         name: "step3",
-        completed: true,
+        completed: false,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Prepare service documentation.",
+        triggerType: "completed",
       },
       {
         id: 4,
@@ -53,16 +55,25 @@ export const sampleData: TaskRow[] = [
         triggerType: "relation",
         linkedStep: {
           id: 3,
-          requiredThings: [{ description: "Service documentation ready" }],
+          requiredThings: [
+            { description: "Service documentation ready" },
+            { description: "Technician assigned" },
+            { description: "Workstation cleared" },
+          ],
+          futureColumnThings: [
+            { needed: true, description: "Diagnostic report attachment column required" },
+            { needed: true, description: "Parts used field required" }
+          ]
         },
       },
       {
         id: 5,
         name: "step5",
-        completed: true, // ✅ triggerType not present → default true
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Awaiting supervisor approval for next phase.",
+        triggerType: "completed",
       },
       {
         id: 6,
@@ -72,38 +83,52 @@ export const sampleData: TaskRow[] = [
         timeSensitiveDate: "2025-11-05",
         description: "Finalize calibration and update report.",
         triggerType: "completed",
+        linkedStep: {
+          id: 4,
+          requiredThings: [
+            { description: "Engine diagnostic results available" },
+          ],
+          futureColumnThings: [
+            { needed: true, description: "Calibration certificate upload" },
+            { needed: false, description: "Technician signature" }
+          ]
+        }
       },
       {
         id: 7,
         name: "step7",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Pending quality assurance check.",
+        triggerType: "completed",
       },
       {
         id: 8,
         name: "step8",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Awaiting delivery slot confirmation.",
+        triggerType: "completed",
       },
       {
         id: 9,
         name: "step9",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Review financial charges for client.",
+        triggerType: "completed",
       },
       {
         id: 10,
         name: "step10",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Confirm shipment documentation.",
+        triggerType: "completed",
       },
       {
         id: 11,
@@ -114,21 +139,33 @@ export const sampleData: TaskRow[] = [
         description: "Complete client satisfaction survey.",
         triggerType: "popup",
         popup: { description: "Survey popup before completion." },
+        linkedStep: {
+          id: 10,
+          requiredThings: [{ description: "Shipment completed" }],
+          futureColumnThings: [
+            { needed: true, description: "Customer feedback score column" },
+            { needed: true, description: "Complaint category column" }
+          ]
+        }
       },
       {
         id: 12,
         name: "step12",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Finalize case and archive report.",
+        triggerType: "completed",
       },
     ],
     statusTL: false,
     completed: false,
   },
+
+  // ✅ Example in category 2
   {
     id: "2",
+    color: "#22c55e",
     category: "CATEGORY 2",
     taskLineChecked: false,
     timeSensitiveDate: null,
@@ -148,6 +185,7 @@ export const sampleData: TaskRow[] = [
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Collect initial service request from client.",
+        triggerType: "completed",
       },
       {
         id: 2,
@@ -158,6 +196,13 @@ export const sampleData: TaskRow[] = [
         description: "Ensure critical maintenance is done before due date.",
         triggerType: "popup",
         popup: { description: "Maintenance alert popup." },
+        linkedStep: {
+          id: 1,
+          requiredThings: [{ description: "Service request approved" }],
+          futureColumnThings: [
+            { needed: true, description: "Maintenance report upload" },
+          ]
+        }
       },
       {
         id: 3,
@@ -166,30 +211,34 @@ export const sampleData: TaskRow[] = [
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Review safety checklist.",
+        triggerType: "completed",
       },
       {
         id: 4,
         name: "step4",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Pending technician assignment.",
+        triggerType: "completed",
       },
       {
         id: 5,
         name: "step5",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Awaiting parts delivery from supplier.",
+        triggerType: "completed",
       },
       {
         id: 6,
         name: "step6",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Inspect and verify part compatibility.",
+        triggerType: "completed",
       },
       {
         id: 7,
@@ -199,37 +248,52 @@ export const sampleData: TaskRow[] = [
         timeSensitiveDate: "2025-11-05",
         description: "Submit final service report to QA team.",
         triggerType: "completed",
+        linkedStep: {
+          id: 6,
+          requiredThings: [
+            { description: "Parts installation confirmed" },
+          ],
+          futureColumnThings: [
+            { needed: true, description: "QA Approval column" }
+          ]
+        }
       },
       {
         id: 8,
         name: "step8",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Pending billing verification.",
+        triggerType: "completed",
       },
       {
         id: 9,
         name: "step9",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Collect payment confirmation.",
+        triggerType: "completed",
       },
       {
         id: 10,
         name: "step10",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Notify customer of service completion.",
+        triggerType: "completed",
       },
     ],
     statusTL: false,
     completed: true,
   },
+
+  // ✅ Category 3 also updated with futureColumnThings
   {
     id: "3",
+    color: "#0070f3",
     category: "CATEGORY 3",
     taskLineChecked: false,
     timeSensitiveDate: null,
@@ -245,34 +309,38 @@ export const sampleData: TaskRow[] = [
       {
         id: 1,
         name: "step1",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Initial intake pending confirmation.",
+        triggerType: "completed",
       },
       {
         id: 2,
         name: "step2",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Verify part availability and order if needed.",
+        triggerType: "completed",
       },
       {
         id: 3,
         name: "step3",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Prepare workshop bay for vehicle inspection.",
+        triggerType: "completed",
       },
       {
         id: 4,
         name: "step4",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Awaiting mechanic assignment.",
+        triggerType: "completed",
       },
       {
         id: 5,
@@ -283,6 +351,15 @@ export const sampleData: TaskRow[] = [
         description: "Conduct emission testing and report results.",
         triggerType: "popup",
         popup: { description: "Emission testing form popup." },
+        linkedStep: {
+          id: 4,
+          requiredThings: [
+            { description: "Mechanic assigned" },
+          ],
+          futureColumnThings: [
+            { needed: true, description: "Emission test sheet upload column" }
+          ]
+        }
       },
       {
         id: 6,
@@ -291,44 +368,50 @@ export const sampleData: TaskRow[] = [
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Approve final maintenance checklist.",
+        triggerType: "completed",
       },
       {
         id: 7,
         name: "step7",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Schedule customer follow-up.",
+        triggerType: "completed",
       },
       {
         id: 8,
         name: "step8",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Invoice preparation in progress.",
+        triggerType: "completed",
       },
       {
         id: 9,
         name: "step9",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Awaiting internal review approval.",
+        triggerType: "completed",
       },
       {
         id: 10,
         name: "step10",
-        completed: true, // ✅ no triggerType
+        completed: true,
         timeSensitive: false,
         timeSensitiveDate: null,
         description: "Finalize and close the work order.",
+        triggerType: "completed",
       },
     ],
     statusTL: false,
     completed: false,
   },
 ];
+
 
 export const adminTemplates: AdminTemplate[] = [
   {
