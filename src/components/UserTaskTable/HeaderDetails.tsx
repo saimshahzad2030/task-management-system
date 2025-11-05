@@ -27,7 +27,9 @@ const HeaderDetails = (headerTitle: string, description: string) => {
 
         <Tabs defaultValue={helpTabs[0]?.label} className="w-full">
           {/* Tabs list */}
-          <TabsList className={`grid w-full mb-2 grid-cols-${helpTabs.length}`}>
+          <TabsList 
+          style={{gridColumn: helpTabs.length }}
+          className={`grid w-full mb-2 `}>
             {helpTabs.map((tab) => (
               <TabsTrigger key={tab.label} value={tab.label}>
                 {tab.label}
