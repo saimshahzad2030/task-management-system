@@ -11,6 +11,7 @@ interface NotesDialogProps {
   onChange: (v: string) => void;
   onSave: () => void;
   onClose: () => void;
+  onDelete:()=>void;
 }
 
 export default function NotesDialog({
@@ -19,6 +20,7 @@ export default function NotesDialog({
   value,
   onChange,
   onSave,
+  onDelete,
   onClose
 }: NotesDialogProps) {
   return (
@@ -35,9 +37,9 @@ export default function NotesDialog({
         />
 
         <DialogFooter>
-          <Button variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
+          {value && <Button variant="secondary" onClick={onDelete}>
+            Delete
+          </Button>}
           <Button onClick={onSave}>Save</Button>
         </DialogFooter>
       </DialogContent>

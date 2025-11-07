@@ -41,11 +41,16 @@ export const QuestionMark = ()=>{
 
 }
 
-export const Flag: React.FC<FlagProps> = ({ onToggle,  color,checked }) => {
- return <div className="w-full flex flex-col items-center">
+export const Flag: React.FC<FlagProps> = ({ onToggle,  color,checked,disabled }) => {
+ return <button
+      disabled={disabled}
+      onClick={() => onToggle(!checked)}
+      className={`w-full flex flex-col items-center ${
+        disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"
+      }`}
+    >
   <svg 
-   onClick={() => onToggle(!checked)} // ✅ toggle same as checkbox
-   className="cursor-pointer"
+   
  fill={color} version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg"   
 	 width="14px" height="14px" viewBox="0 0 450 450" >
 <g>
@@ -70,13 +75,13 @@ export const Flag: React.FC<FlagProps> = ({ onToggle,  color,checked }) => {
 	</g>
 </g>
 </svg>
- </div>
+ </button>
 }
 
 export const MarkedNotes  = ({   }) =>{
   return (
-  <svg className="w-3 h-auto" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-    <path d="M7 0h16v20H5V0h2zm14 18V2H7v16h14zM9 4h10v2H9V4zm10 4H9v2h10V8zM9 12h7v2H9v-2zm10 10H3V4H1v20h18v-2z" fill="#000000"/>
+ <svg className="w-3 h-auto rotate-180" viewBox="0 0 48 48" fill="black" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M8 9.1153C8 7.29468 10.2347 6.42094 11.4696 7.75874L40.9016 39.6434C42.0842 40.9246 41.1755 43 39.432 43H10C8.89543 43 8 42.1046 8 41V9.1153Z" stroke="#000000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
   )
 }

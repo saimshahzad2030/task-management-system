@@ -17,9 +17,15 @@ export type FixedColumnKey = "category" | "vehicle" | "date1";
 
  
 export type FinalColumnKey = "statusTL" | "completed";
- 
+ export type ColumnDetails = null |  {
+    description:string;
+    copyEnabled:boolean;
+    adminTemplate:AdminTemplate;
+  };
 // Single step in a template or user task
 export interface Step {
+  id:number;
+  columnDetails?:ColumnDetails;
   name: string;                           // Step name or label
   description?: string;                   // Optional extra details for users
   completed: boolean;                     // For user tasks (false by default)
@@ -29,7 +35,29 @@ export interface Step {
   trigger?: "none" | "informative" | "popup" | "confirmation" | "reminder"; // Admin trigger type
   info?: string;                          // Instruction, note, or email text
 }
-
+export interface ListStep {
+    id?:number;
+    columnId:number;
+     columnDetails?:ColumnDetails;
+ 
+    name: string;
+    markedNext?: boolean;
+    completed: boolean;
+    timeSensitive: boolean;
+    notes?:string;
+    timeSensitiveDate: string | null;
+    description: string;
+    triggerType:"popup" | "relation" | "completed"
+    popup?:{description:string}
+    linkedStep?:{id:number,
+       
+      requiredThings:{description:string}[],
+      futureColumnThings?:{
+        needed:boolean;
+        description:string;
+      }[]
+    }
+  }
 // Admin-created reusable template
 export interface AdminTemplate {
   id: string;
@@ -55,35 +83,19 @@ export interface TaskRow {
       danger: { days: number, color: string },
     },
   otherColumns: {
+    columnId:number;
     name: string;
     type: "text" | "check" | "date";
     value?:string;
   }[];
-  steps: {
-    id?:number;
-    name: string;
-    markedNext?: boolean;
-    completed: boolean;
-    timeSensitive: boolean;
-    notes?:string;
-    timeSensitiveDate: string | null;
-    description: string;
-    triggerType:"popup" | "relation" | "completed"
-    popup?:{description:string}
-    linkedStep?:{id:number,
-      requiredThings:{description:string}[],
-      futureColumnThings?:{
-        needed:boolean;
-        description:string;
-      }[]
-    }
-  }[];
+  steps: ListStep[];
   statusTL: boolean;
   completed: boolean;
 }
 
 export type FlagProps = { 
   checked:boolean;
+   disabled:boolean;
    onToggle: (value: boolean) => void;
   color?: string; // ✅ custom color support
 };

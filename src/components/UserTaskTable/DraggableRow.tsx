@@ -6,7 +6,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 
-export default function DraggableRow({ id, children }: any) {
+export default function DraggableRow({ id, children,className }: any) {
   const {
     attributes,
     listeners,
@@ -21,7 +21,7 @@ export default function DraggableRow({ id, children }: any) {
   };
 
   return (
-    <tr ref={setNodeRef} style={style}>
+    <tr className={className} ref={setNodeRef} style={style}>
       <td
         {...attributes}
         {...listeners}
