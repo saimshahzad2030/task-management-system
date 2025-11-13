@@ -32,7 +32,9 @@ export interface Step {
   timeSensitive: boolean;                 // If true, color-code by deadlines
   timeSensitiveDate: string | null;       // Actual date if applicable
   type?: "text" | "check" | "date";       // Optional step input type
-  trigger?: "none" | "informative" | "popup" | "confirmation" | "reminder"; // Admin trigger type
+  trigger?: "popup" | "relation" | "completed"; // Admin trigger type
+   popup?:{description:string}
+    linkedStep?:{id:number }
   info?: string;                          // Instruction, note, or email text
 }
 export interface ListStep {
@@ -42,6 +44,7 @@ export interface ListStep {
  
     name: string;
     markedNext?: boolean;
+    markedNextRed?:boolean;
     completed: boolean;
     timeSensitive: boolean;
     notes?:string;
@@ -64,6 +67,8 @@ export interface AdminTemplate {
   category: string;
   color: string;
   description: string;
+  createdAt?:Date;
+  updatedAt?:Date;
   timeSensitiveColors?: {
     warning: { days: number; color: string }; // Yellow at X days
     danger: { days: number; color: string };  // Red at Y days
@@ -74,6 +79,8 @@ export interface AdminTemplate {
 // User-created task line (based on admin template)
 export interface TaskRow {
   id: string;
+    createdAt?:Date;
+  updatedAt?:Date;
     color: string;
   category: string;
   taskLineChecked: boolean;

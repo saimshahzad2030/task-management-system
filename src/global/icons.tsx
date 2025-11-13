@@ -44,13 +44,13 @@ export const QuestionMark = ()=>{
 export const Flag: React.FC<FlagProps> = ({ onToggle,  color,checked,disabled }) => {
  return <button
       disabled={disabled}
-      onClick={() => onToggle(!checked)}
-      className={`w-full flex flex-col items-center ${
+      
+      className={`  w-full flex flex-col items-center justify-center ${
         disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"
       }`}
     >
   <svg 
-   
+   onClick={() => onToggle(!checked)}
  fill={color} version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg"   
 	 width="14px" height="14px" viewBox="0 0 450 450" >
 <g>

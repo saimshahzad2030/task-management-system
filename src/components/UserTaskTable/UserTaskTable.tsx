@@ -37,6 +37,7 @@ import {
 import DraggableRow from "./DraggableRow";
 import NotesDialog from "./NotesDialog";
 import { Input } from "../ui/input";
+import { convertSegmentPathToStaticExportFilename } from "next/dist/shared/lib/segment-cache/segment-value-encoding";
 
 
 
@@ -741,10 +742,30 @@ export default function UserTaskTable() {
     <TooltipTrigger asChild>
       <div className={`relative flex flex-col items-center w-full h-full 
         
-        cursor-pointer`}
+         `}
       >
-      <div className={`flex flex-col items-center w-8/12 h-full ${row.taskLineChecked ? "bg-red-600" : step ? step.completed ? "bg-lime-500"
-        : step.markedNext ? "bg-yellow-300" : "bg-white" : ""}`}>
+      <div
+  onClick={() => {
+setData(prev => {
+    return prev.map((taskRow, rIndex) => {
+      if (rIndex !== idx) return taskRow;
+
+      return {
+        ...taskRow,
+        steps: taskRow.steps.map(s =>
+          s.columnId === stepName.columnId
+            ? { ...s, markedNextRed: !(s.markedNextRed ?? false) }
+            : s
+        )
+      };
+    });
+  });
+}}
+
+
+      className={`flex flex-col items-center w-8/12 h-full ${row.taskLineChecked ? "bg-red-600" : step ? step.completed ? "bg-lime-500"
+        : step.markedNext ? "bg-yellow-300" 
+        : step.markedNextRed ? "bg-red-200" :"bg-gray-200" : ""}`}>
           {/* Notes icon */}
         {step?.notes && (
           <div className="absolute flex flex-row items-center justify-end top-0 right-0">
@@ -795,7 +816,7 @@ export default function UserTaskTable() {
                           {finalColumns.map((col) => (
                             <td
                               key={col}
-                              className={`text-center min-w-[110px] ${row.taskLineChecked ? "bg-red-600" : "bg-white"
+                              className={`pr-4 text-center min-w-[55px] ${row.taskLineChecked ? "bg-red-600" : "bg-white"
                                 }`}
                             >
                               <Flag

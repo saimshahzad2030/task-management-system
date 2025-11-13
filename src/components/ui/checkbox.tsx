@@ -16,7 +16,7 @@ const checkboxVariants = cva(
      default:
   "border-input dark:bg-input/30 data-[state=checked]:bg-primary data-[state=checked]:border-white [&_[data-slot=checkbox-indicator]]:data-[state=checked]:text-white",
   success:
-          " border-black data-[state=checked]:bg-green-500 data-[state=checked]:border-black data-[state=checked]:text-white",
+          "bg-white border-black data-[state=checked]:bg-green-500 data-[state=checked]:border-black data-[state=checked]:text-white",
        white:
           "  bg-white border-black data-[state=checked]:bg-emerald-900 data-[state=checked]:border-black data-[state=checked]:text-white",
       yellow: `

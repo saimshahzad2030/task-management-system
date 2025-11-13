@@ -14,18 +14,18 @@ export const adminTemplates: AdminTemplate[] = [
     },
 
     steps: [
-      { id: 1, name: "Verify Customer Info", type: "text", timeSensitive: false, trigger: "informative", info: "Ensure the customer and vehicle data match the database." },
-      { id: 2, name: "Schedule Inspection", type: "date", timeSensitive: true, trigger: "reminder", info: "Set inspection before due date. Turns yellow at 6 days, red at 3 days." },
-      { id: 3, name: "Prepare Documentation", type: "check", timeSensitive: false, trigger: "informative", info: "Confirm all documents are uploaded to the system." },
+      { id: 1, name: "Verify Customer Info", type: "text", timeSensitive: false, trigger: "completed", info: "Ensure the customer and vehicle data match the database." },
+      { id: 2, name: "Schedule Inspection", type: "date", timeSensitive: true, trigger: "completed", info: "Set inspection before due date. Turns yellow at 6 days, red at 3 days." },
+      { id: 3, name: "Prepare Documentation", type: "check", timeSensitive: false, trigger: "completed", info: "Confirm all documents are uploaded to the system." },
       { id: 4, name: "Perform Diagnostics", type: "check", timeSensitive: true, trigger: "popup", info: "Complete full engine diagnostic before final approval." },
-      { id: 5, name: "Supervisor Approval", type: "check", timeSensitive: false, trigger: "confirmation", info: "Supervisor must approve this phase before proceeding." },
+      { id: 5, name: "Supervisor Approval", type: "check", timeSensitive: false, trigger: "completed", info: "Supervisor must approve this phase before proceeding." },
 
       // ✅ Added steps
-      { id: 6, name: "Parts Quality Check", type: "check", timeSensitive: false, trigger: "none", info: "Verify parts quality meets standards." },
-      { id: 7, name: "Assign Work Order", type: "text", timeSensitive: false, trigger: "informative", info: "Assign official work order number." },
-      { id: 8, name: "Upload Inspection Images", type: "text", timeSensitive: false, trigger: "informative", info: "Attach inspection images for records." },
+      { id: 6, name: "Parts Quality Check", type: "check", timeSensitive: false, trigger: "completed", info: "Verify parts quality meets standards." },
+      { id: 7, name: "Assign Work Order", type: "text", timeSensitive: false, trigger: "completed", info: "Assign official work order number." },
+      { id: 8, name: "Upload Inspection Images", type: "text", timeSensitive: false, trigger: "completed", info: "Attach inspection images for records." },
       { id: 9, name: "Generate Calibration Report", type: "text", timeSensitive: true, trigger: "popup", info: "Report must be generated before final handover." },
-      { id: 10, name: "Customer Handover", type: "check", timeSensitive: false, trigger: "confirmation", info: "Vehicle handed over to customer with report summary." },
+      { id: 10, name: "Customer Handover", type: "check", timeSensitive: false, trigger: "completed", info: "Vehicle handed over to customer with report summary." },
     ],
   },
   {
@@ -40,18 +40,18 @@ export const adminTemplates: AdminTemplate[] = [
     },
 
     steps: [
-      { id: 1, name: "Collect Service Request", type: "text", timeSensitive: false, trigger: "none", info: "Record customer service request details." },
+      { id: 1, name: "Collect Service Request", type: "text", timeSensitive: false, trigger: "completed", info: "Record customer service request details." },
       { id: 2, name: "Critical Maintenance", type: "date", timeSensitive: true, trigger: "popup", info: "Maintenance deadline triggers warning at 6/3 days." },
-      { id: 3, name: "Safety Review", type: "check", timeSensitive: false, trigger: "informative", info: "Review and complete safety checklist." },
-      { id: 4, name: "Assign Technician", type: "check", timeSensitive: false, trigger: "none", info: "Assign technician based on specialization." },
+      { id: 3, name: "Safety Review", type: "check", timeSensitive: false, trigger: "completed", info: "Review and complete safety checklist." },
+      { id: 4, name: "Assign Technician", type: "check", timeSensitive: false, trigger: "completed", info: "Assign technician based on specialization." },
       { id: 5, name: "Final QA Submission", type: "check", timeSensitive: true, trigger: "popup", info: "Must be submitted to QA before the final due date." },
 
       // ✅ Added steps
-      { id: 6, name: "Service Bay Allocation", type: "text", timeSensitive: false, trigger: "none", info: "Assign a service bay before work begins." },
-      { id: 7, name: "Upload Pre-Maintenance Images", type: "text", timeSensitive: false, trigger: "informative", info: "Upload images for initial condition." },
-      { id: 8, name: "Parts Replacement", type: "check", timeSensitive: false, trigger: "none", info: "Replace faulty components if required." },
+      { id: 6, name: "Service Bay Allocation", type: "text", timeSensitive: false, trigger: "completed", info: "Assign a service bay before work begins." },
+      { id: 7, name: "Upload Pre-Maintenance Images", type: "text", timeSensitive: false, trigger: "completed", info: "Upload images for initial condition." },
+      { id: 8, name: "Parts Replacement", type: "check", timeSensitive: false, trigger: "completed", info: "Replace faulty components if required." },
       { id: 9, name: "System Diagnostics Test", type: "date", timeSensitive: true, trigger: "popup", info: "Run system test to verify proper functioning." },
-      { id: 10, name: "Customer Feedback Form", type: "text", timeSensitive: false, trigger: "informative", info: "Collect final feedback before closing job." },
+      { id: 10, name: "Customer Feedback Form", type: "text", timeSensitive: false, trigger: "completed", info: "Collect final feedback before closing job." },
     ],
   },
   {
@@ -66,18 +66,18 @@ export const adminTemplates: AdminTemplate[] = [
     },
 
     steps: [
-      { id: 1, name: "Intake Confirmation", type: "text", timeSensitive: false, trigger: "informative", info: "Confirm initial intake form with customer." },
-      { id: 2, name: "Order Parts", type: "check", timeSensitive: false, trigger: "none", info: "Order missing or required parts before next step." },
-      { id: 3, name: "Prepare Workshop Bay", type: "check", timeSensitive: false, trigger: "none", info: "Ensure bay and tools are ready for inspection." },
+      { id: 1, name: "Intake completed", type: "text", timeSensitive: false, trigger: "completed", info: "Confirm initial intake form with customer." },
+      { id: 2, name: "Order Parts", type: "check", timeSensitive: false, trigger: "completed", info: "Order missing or required parts before next step." },
+      { id: 3, name: "Prepare Workshop Bay", type: "check", timeSensitive: false, trigger: "completed", info: "Ensure bay and tools are ready for inspection." },
       { id: 4, name: "Emission Test", type: "date", timeSensitive: true, trigger: "popup", info: "Emission testing must be completed before inspection date." },
-      { id: 5, name: "Final Approval", type: "check", timeSensitive: false, trigger: "confirmation", info: "Approve the final maintenance checklist." },
+      { id: 5, name: "Final Approval", type: "check", timeSensitive: false, trigger: "completed", info: "Approve the final maintenance checklist." },
 
       // ✅ Added steps
-      { id: 6, name: "Upload Emission Results", type: "text", timeSensitive: false, trigger: "informative", info: "Attach test results to the record." },
-      { id: 7, name: "Engine Health Scan", type: "check", timeSensitive: false, trigger: "none", info: "Run health scan for engine condition." },
-      { id: 8, name: "Part Replacement Check", type: "check", timeSensitive: false, trigger: "none", info: "Verify required parts were replaced." },
+      { id: 6, name: "Upload Emission Results", type: "text", timeSensitive: false, trigger: "completed", info: "Attach test results to the record." },
+      { id: 7, name: "Engine Health Scan", type: "check", timeSensitive: false, trigger: "completed", info: "Run health scan for engine condition." },
+      { id: 8, name: "Part Replacement Check", type: "check", timeSensitive: false, trigger: "completed", info: "Verify required parts were replaced." },
       { id: 9, name: "Re-Test if Failed", type: "date", timeSensitive: true, trigger: "popup", info: "If the vehicle fails emission, re-test before approval." },
-      { id: 10, name: "Customer Documentation", type: "text", timeSensitive: false, trigger: "confirmation", info: "Provide emission report to customer and archive it." },
+      { id: 10, name: "Customer Documentation", type: "text", timeSensitive: false, trigger: "completed", info: "Provide emission report to customer and archive it." },
     ],
   },
 ];
@@ -102,7 +102,8 @@ export const sampleData: TaskRow[] = [
     ],
     steps: [
       {
-        id: 1, columnId: 1, columnDetails: {
+        id: 1, 
+        columnId: 1, columnDetails: {
           description: "sdsad sd sadsad ",
           copyEnabled: true,
           adminTemplate: adminTemplates[3]
@@ -195,7 +196,7 @@ export const sampleData: TaskRow[] = [
       { columnId: 3, name: "Inspection Date", type: "date" },
     ],
     steps: [
-      { id: 1, columnId: 1, name: "Intake Confirmation", completed: true, timeSensitive: false, timeSensitiveDate: null, description: "Intake confirmed.", triggerType: "completed" },
+      { id: 1, columnId: 1, name: "Intake completed", completed: true, timeSensitive: false, timeSensitiveDate: null, description: "Intake confirmed.", triggerType: "completed" },
       { id: 2, columnId: 2, name: "Order Parts", completed: false, timeSensitive: false, timeSensitiveDate: null, description: "Order pending.", triggerType: "completed" },
       { id: 3, columnId: 3, name: "Prepare Workshop Bay", completed: true, timeSensitive: false, timeSensitiveDate: null, description: "Workshop ready.", triggerType: "completed" },
       { id: 4, columnId: 4, name: "Emission Test", completed: false, timeSensitive: true, timeSensitiveDate: "2025-11-05", description: "Emission test required.", triggerType: "popup" },

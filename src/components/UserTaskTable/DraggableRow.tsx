@@ -9,7 +9,7 @@ import { GripVertical } from "lucide-react";
 export default function DraggableRow({ id, children,className }: any) {
   const {
     attributes,
-    listeners,
+    listeners, 
     setNodeRef,
     transform,
     transition,
