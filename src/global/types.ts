@@ -20,22 +20,22 @@ export type FinalColumnKey = "statusTL" | "completed";
  export type ColumnDetails = null |  {
     description:string;
     copyEnabled:boolean;
-    adminTemplate:AdminTemplate;
+    adminTemplate?:AdminTemplate;
   };
 // Single step in a template or user task
 export interface Step {
   id:number;
-  columnDetails?:ColumnDetails;
+  columnDetails?:ColumnDetails ;
   name: string;                           // Step name or label
   description?: string;                   // Optional extra details for users
-  completed: boolean;                     // For user tasks (false by default)
-  timeSensitive: boolean;                 // If true, color-code by deadlines
-  timeSensitiveDate: string | null;       // Actual date if applicable
+  completed?: boolean;                     // For user tasks (false by default)
+  timeSensitive?: boolean;                 // If true, color-code by deadlines
+  timeSensitiveDate?: string | null;       // Actual date if applicable
   type?: "text" | "check" | "date";       // Optional step input type
-  trigger?: "popup" | "relation" | "completed"; // Admin trigger type
-   popup?:{description:string}
-    linkedStep?:{id:number }
-  info?: string;                          // Instruction, note, or email text
+  trigger?: "popup" | "relation" | "completed" ; // Admin trigger type
+   popup?:{description:string | null} | null
+    linkedStep?:{id:number } | null
+  info?: string | null;                          // Instruction, note, or email text
 }
 export interface ListStep {
     id?:number;
@@ -65,6 +65,7 @@ export interface ListStep {
 export interface AdminTemplate {
   id: string;
   category: string;
+
   color: string;
   description: string;
   createdAt?:Date;
@@ -98,6 +99,7 @@ export interface TaskRow {
   steps: ListStep[];
   statusTL: boolean;
   completed: boolean;
+  columnDetails?:ColumnDetails;
 }
 
 export type FlagProps = { 

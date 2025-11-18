@@ -7,7 +7,7 @@ export const adminTemplates: AdminTemplate[] = [
     category: "CALIBER-AARONA",
     color: "#0070f3",
     description: "Calibration workflow template for AARONA division vehicles.",
-
+    
     timeSensitiveColors: {
       warning: { days: 6, color: "#FFD93D" },
       danger: { days: 3, color: "#FF6B6B" },
@@ -100,6 +100,7 @@ export const sampleData: TaskRow[] = [
 
       { columnId: 3, name: "Inspection Date", type: "date" },
     ],
+    columnDetails:{copyEnabled:true,description:"sdas dasd as das dasd",adminTemplate:adminTemplates[0]},
     steps: [
       {
         id: 1, 
@@ -143,6 +144,8 @@ export const sampleData: TaskRow[] = [
   // ✅ 2 — CATEGORY 2
   {
     id: "2",
+    
+    columnDetails:{copyEnabled:false,description:"s  sadasddas dasd asa asd asds das dasd",adminTemplate:adminTemplates[1]},
     color: "#22c55e",
     category: "CATEGORY 2",
     taskLineChecked: false,
@@ -181,6 +184,8 @@ export const sampleData: TaskRow[] = [
   // ✅ 3 — CATEGORY 3
   {
     id: "3",
+    
+    columnDetails:{copyEnabled:true,description:"sdad asd asd s d sdsa asdasd as das dasd",adminTemplate:adminTemplates[3]},
     color: "#f97316",
     category: "CATEGORY 3",
     taskLineChecked: false,
@@ -214,6 +219,8 @@ export const sampleData: TaskRow[] = [
   // ✅ 4 — Extra Task (Random Category)
   {
     id: "4",
+    
+    columnDetails:{copyEnabled:true,description:"sdas dasd as das dasd",adminTemplate:adminTemplates[2]},
     color: "#9b59b6",
     category: "CATEGORY 4",
     taskLineChecked: false,
@@ -245,6 +252,7 @@ export const sampleData: TaskRow[] = [
   // ✅ 5 — Extra Task (Random Category)
   {
     id: "5",
+    columnDetails:{copyEnabled:true,description:"sdas dasd as das dasd",adminTemplate:adminTemplates[1]},
     color: "#e91e63",
     category: "CATEGORY 5",
     taskLineChecked: false,

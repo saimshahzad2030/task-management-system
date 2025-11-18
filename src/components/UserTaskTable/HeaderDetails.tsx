@@ -14,7 +14,7 @@ const helpTabs = [
   { label: "CF", description: "CF tab covers Control Function or completion flow logic.", allowCopy: true },
 ];
 
-const HeaderDetails = (headerTitle: string, description: string) => {
+const HeaderDetails = ( arr:{color:string,label: string, description: string, allowCopy: boolean}[],headerTitle:string ) => {
   toast.custom((t) => (
    <div className="p-3 bg-white border border-gray-200 rounded-md shadow-md w-[340px] pt-8">
      <button
@@ -25,20 +25,20 @@ const HeaderDetails = (headerTitle: string, description: string) => {
       </button>
         <h4 className="font-semibold text-gray-800 mb-2">{headerTitle}</h4>
 
-        <Tabs defaultValue={helpTabs[0]?.label} className="w-full">
+        <Tabs defaultValue={arr[0]?.label} className="w-full">
           {/* Tabs list */}
           <TabsList 
-     
-          className={`grid w-full mb-2 grid-cols-4`}>
-            {helpTabs.map((tab) => (
-              <TabsTrigger key={tab.label} value={tab.label}>
-                {tab.label}
+      style={{display:'grid',width:'100%',marginBottom:"8px",gridColumn:arr.length}}
+          >
+            {arr.map((tab,index) => (
+              <TabsTrigger className={`${arr.length==1 && "w-[200px]"}`} key={tab.label} value={tab.label} style={{borderColor:arr[index].color, color:arr[index].color    }}>
+                {tab.label} 
               </TabsTrigger>
             ))}
           </TabsList>
 
           {/* Tabs content */}
-          {helpTabs.map((tab) => (
+          {arr.map((tab) => (
             <TabsContent key={tab.label} value={tab.label}>
               <p className="text-sm text-gray-600 mb-2">{tab.description}</p>
 
