@@ -116,7 +116,7 @@ const router = useRouter()
     if (data.emailOrUsername === "user@tms.com" && data.password === "tms-123") {
       toast.dismiss(loadingToast); // remove loading
       toast.success("Login Successful");
-      router.push("/user-tasks");
+      router.push("/user-tasks/1");
     } else {
       toast.dismiss(loadingToast);
       toast.error("Wrong Credentials! Please try again.");
