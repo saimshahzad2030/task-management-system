@@ -1,8 +1,9 @@
 import React from 'react'
 import { Button } from '../ui/button'
 import { Plus } from 'lucide-react'
+import { UserTaskHeaderProps } from '@/global/componentTypes'
 
-const UserTaskHeader = () => {
+const UserTaskHeader = ({ adminTemplate }: UserTaskHeaderProps) => {
   return (
       <div className='flex flex-row items-center '>
             <h1 className='text-5xl'>LOGO</h1>

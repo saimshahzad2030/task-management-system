@@ -9,7 +9,7 @@ import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifi
 import { CalendarIcon, CircleQuestionMark, HelpCircle } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FinalColumnKey, TaskRow } from "@/global/types";
+import { ColumnDetails, FinalColumnKey, ListStep, NotesPopupState, TaskRow } from "@/global/types";
 import { sampleData as initialData } from "@/global/constant";
 import { fixedColumns, finalColumns } from "@/global/constant";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -38,23 +38,41 @@ import DraggableRow from "./DraggableRow";
 import NotesDialog from "./NotesDialog";
 import { Input } from "../ui/input";
 import { convertSegmentPathToStaticExportFilename } from "next/dist/shared/lib/segment-cache/segment-value-encoding";
+import { UserTaskHeaderProps } from "@/global/componentTypes";
+import { convertAdminTemplateToTaskData } from "@/utils/convertIntoUserTasks";
 
 
 
 
-export default function UserTaskTable() {
-  const [data, setData] = useState(initialData);
-  const [notesPopup, setNotesPopup] = useState({
+const UserTaskTable = ({ adminTemplate }: UserTaskHeaderProps) => {
+  const saveToLocalStorage = () => {
+  try {
+    const cloned = JSON.parse(JSON.stringify(data)); // DEEP CLONE
+
+    localStorage.setItem("user-task-data", JSON.stringify(cloned));
+    setLastSavedData(cloned); // store clean snapshot
+    toast.success("Changes saved!");
+  } catch (err) {
+    toast.error("Failed to save data");
+  }
+};
+  const [data, setData] = useState([convertAdminTemplateToTaskData(adminTemplate)]);
+const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
+ 
+  const [open, setOpen] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [notesPopup, setNotesPopup] = useState<NotesPopupState>({
     open: false,
-    stepName: "",
+    x: 0,
+    y: 0,
     rowIndex: null as number | null,
+    stepName: "",
     value: ""
   });
-  const [open, setOpen] = useState(false);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();        // prevent browser default right-click menu
-    console.log("RIGHT CLICK FIRED ✅");
+
 
     setOpen(true);             // open popover
   };
@@ -123,8 +141,26 @@ export default function UserTaskTable() {
   const stepColumns = data[0]?.steps.map((s: any) => s.name) || [];
 
 
+  function applyMarkedNextRed(steps: ListStep[], clickedIndex: number) {
+    // find all completed steps
+    const brokenRange: number[] = [];
+    for (let i = 0; i < clickedIndex; i++) {
+      if (!steps[i].completed) brokenRange.push(i);
+    }
 
+    // 2️⃣ Find next uncompleted step AFTER clickedIndex
+    const next = steps.findIndex((s, i) => i > clickedIndex && !s.completed);
 
+    return steps.map((s, i) => ({
+      ...s,
+
+      // keep old red unless the step is now completed
+      markedNextRed:
+        s.completed
+          ? false
+          : s.markedNextRed || brokenRange.includes(i) || i === next
+    }));
+  }
   const handleCheckbox = (
     rowIndex: number,
     stepName: string,
@@ -133,31 +169,43 @@ export default function UserTaskTable() {
     const step = data[rowIndex].steps.find((s) => s.name === stepName);
     if (!step) return;
 
-    // ✅ Step already completed
+    // =========================================
+    // ✅ IF UNCHECKING — show confirmation
+    // =========================================
     if (step.completed) {
       toast.custom((t) => (
         <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[300px]">
-          <p className="text-gray-900 text-xl mb-3">
-            Are you sure?
-          </p>
+          <p className="text-gray-900 text-xl mb-3">Are you sure?</p>
           <p className="text-gray-700 text-sm mb-3">
-            You want to Uncheck the folowing column?
+            You want to Uncheck the following column?
           </p>
+
           <div className="flex justify-end">
             <Button size="sm" onClick={() => toast.dismiss(t)} variant="outline">
               Cancel
             </Button>
-            <Button size="sm" onClick={() => {
 
-              setData(prev => {
-                const updated = [...prev];
-                updated[rowIndex].steps = updated[rowIndex].steps.map(s =>
-                  s.name === stepName ? { ...s, completed: false } : s
-                );
-                return updated;
-              });
-              toast.dismiss(t)
-            }} variant="outline">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setData(prev => {
+                  const updated = [...prev];
+                  const newSteps = updated[rowIndex].steps.map(s =>
+                    s.name === stepName ? { ...s, completed: false } : s
+                  );
+
+                  const clickedIndex = updated[rowIndex].steps.findIndex(
+                    s => s.name === stepName
+                  );
+
+                  updated[rowIndex].steps = applyMarkedNextRed(newSteps, clickedIndex);
+
+                  return updated;
+                });
+                toast.dismiss(t);
+              }}
+            >
               Yes
             </Button>
           </div>
@@ -166,108 +214,142 @@ export default function UserTaskTable() {
       return;
     }
 
-    // ✅ Trigger type: completed
+    // =========================================
+    // ✅ Trigger: completed
+    // =========================================
     if (step.triggerType === "completed") {
       setData(prev => {
         const updated = [...prev];
-        updated[rowIndex].steps = updated[rowIndex].steps.map(s =>
+
+        let newSteps = updated[rowIndex].steps.map(s =>
           s.name === stepName ? { ...s, completed: true } : s
         );
+
+        const clickedIndex = updated[rowIndex].steps.findIndex(
+          s => s.name === stepName
+        );
+
+        updated[rowIndex].steps = applyMarkedNextRed(newSteps, clickedIndex);
         return updated;
       });
+
       return;
     }
 
-    // ✅ Trigger type: popup
+    // =========================================
+    // ✅ Trigger: popup
+    // =========================================
     if (step.triggerType === "popup") {
-      toast.custom((t) => (
-        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[320px]">
-          <p className="text-gray-800 text-sm mb-3">
-            {step.popup?.description || "Please confirm this action."}
-          </p>
-          <div className="flex justify-end space-x-2">
-            <Button size="sm" variant="outline" onClick={() => toast.dismiss(t)}>
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => {
-                setData(prev => {
-                  const updated = [...prev];
-                  updated[rowIndex].steps = updated[rowIndex].steps.map(s =>
-                    s.name === stepName ? { ...s, completed: true } : s
-                  );
-                  return updated;
-                });
-                toast.dismiss(t);
-                toast.success("Step marked as completed!");
-              }}
-            >
-              OK
-            </Button>
+      toast.custom(
+        (t) => (
+          <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[320px]">
+            <p className="text-gray-800 text-sm mb-3">
+              {step.popup?.description || "Please confirm this action."}
+            </p>
+
+            <div className="flex justify-end space-x-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => toast.dismiss(t)}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                size="sm"
+                onClick={() => {
+                  setData(prev => {
+                    const updated = [...prev];
+
+                    let newSteps = updated[rowIndex].steps.map(s =>
+                      s.name === stepName ? { ...s, completed: true } : s
+                    );
+
+                    const clickedIndex = updated[rowIndex].steps.findIndex(
+                      s => s.name === stepName
+                    );
+
+                    updated[rowIndex].steps = applyMarkedNextRed(newSteps, clickedIndex);
+
+                    return updated;
+                  });
+
+                  toast.dismiss(t);
+                  toast.success("Step marked as completed!");
+                }}
+              >
+                OK
+              </Button>
+            </div>
           </div>
-        </div>
-      ),
+        ),
         {
-          position: "top-center", // 👈 only this toast appears at the top center
-          duration: 6000, // optional: auto close after 6s
-          dismissible: true, // allow click to dismiss
-        });
+          position: "top-center",
+          duration: 6000,
+          dismissible: true,
+        }
+      );
       return;
     }
 
-    // ✅ Trigger type: relation
+    // =========================================
+    // ✅ Trigger: relation
+    // =========================================
     if (step.triggerType === "relation") {
       const initial = structuredClone(step?.linkedStep?.futureColumnThings || []);
 
-      toast.custom((t) => {
-        function FutureColumnToast() {
-          const [state, setState] = React.useState(initial);
+      toast.custom(
+        (t) => {
+          function FutureColumnToast() {
+            const [state, setState] = React.useState(initial);
 
-          return (
-            <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[330px]">
-              <p className="text-gray-800 text-sm mb-3">
-                You just finished this column. Mark what is needed for the next column:
-              </p>
+            return (
+              <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[330px]">
+                <p className="text-gray-800 text-sm mb-3">
+                  You just finished this column. Mark what is needed for the next
+                  column:
+                </p>
 
-              <div className="space-y-2 max-h-[140px] overflow-y-auto mb-3 pr-1">
-                {state.map((fc, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between border rounded px-2 py-2"
+                <div className="space-y-2 max-h-[140px] overflow-y-auto mb-3 pr-1">
+                  {state.map((fc, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between border rounded px-2 py-2"
+                    >
+                      <span className="text-xs text-gray-700">
+                        {fc.description}
+                      </span>
+                      <Switch
+                        checked={fc.needed}
+                        onCheckedChange={(val) => {
+                          const copy = [...state];
+                          copy[i] = { ...copy[i], needed: val };
+                          setState(copy);
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => toast.dismiss(t)}
                   >
-                    <span className="text-xs text-gray-700">{fc.description}</span>
-                    <Switch
-                      checked={fc.needed}
-                      onCheckedChange={(val) => {
-                        const copy = [...state];
-                        copy[i] = { ...copy[i], needed: val };
-                        setState(copy);
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
+                    Cancel
+                  </Button>
 
-              <div className="flex justify-end space-x-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => toast.dismiss(t)}
-                >
-                  Cancel
-                </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setData(prev =>
+                        prev.map((row, rIndex) => {
+                          if (rIndex !== rowIndex) return row;
 
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setData(prev =>
-                      prev.map((row, rIndex) => {
-                        if (rIndex !== rowIndex) return row;
-
-                        return {
-                          ...row,
-                          steps: row.steps.map(s => {
+                          // update current steps
+                          let updatedSteps = row.steps.map(s => {
                             if (s.name === stepName) {
                               return {
                                 ...s,
@@ -278,38 +360,233 @@ export default function UserTaskTable() {
                                 },
                               };
                             }
-
-                            if (step?.linkedStep && s.id === step.linkedStep.id) {
+                            if (step?.linkedStep && step.linkedStep.id == s.columnId) {
+                       
                               return { ...s, markedNext: true };
                             }
 
+
                             return s;
-                          }),
-                        };
-                      })
-                    );
+                          });
 
-                    toast.dismiss(t);
-                  }}
-                >
-                  OK
-                </Button>
+                          const clickedIndex = updatedSteps.findIndex(s => s.name === stepName);
+                          updatedSteps = applyMarkedNextRed(updatedSteps, clickedIndex);
+
+                          return {
+                            ...row,
+                            steps: updatedSteps,
+                          };
+                        })
+                      );
+
+                      toast.dismiss(t);
+                    }}
+                  >
+                    OK
+                  </Button>
+                </div>
               </div>
-            </div>
-          );
-        }
+            );
+          }
 
-        return <FutureColumnToast />;
-      }
-        ,
+          return <FutureColumnToast />;
+        },
         {
-          position: "top-center", // 👈 only this toast appears at the top center
-          duration: 6000, // optional: auto close after 6s
-          dismissible: true, // allow click to dismiss
-        });
+          position: "top-center",
+          duration: 6000,
+          dismissible: true,
+        }
+      );
+
       return;
     }
   };
+
+  // const handleCheckbox = (
+  //   rowIndex: number,
+  //   stepName: string,
+  //   value: boolean | "indeterminate"
+  // ) => {
+  //   const step = data[rowIndex].steps.find((s) => s.name === stepName);
+  //   if (!step) return;
+
+  //   // ✅ Step already completed
+  //   if (step.completed) {
+  //     toast.custom((t) => (
+  //       <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[300px]">
+  //         <p className="text-gray-900 text-xl mb-3">
+  //           Are you sure?
+  //         </p>
+  //         <p className="text-gray-700 text-sm mb-3">
+  //           You want to Uncheck the folowing column?
+  //         </p>
+  //         <div className="flex justify-end">
+  //           <Button size="sm" onClick={() => toast.dismiss(t)} variant="outline">
+  //             Cancel
+  //           </Button>
+  //           <Button size="sm" onClick={() => {
+
+  //             setData(prev => {
+  //               const updated = [...prev];
+  //               updated[rowIndex].steps = updated[rowIndex].steps.map(s =>
+  //                 s.name === stepName ? { ...s, completed: false } : s
+  //               );
+  //               return updated;
+  //             });
+  //             toast.dismiss(t)
+  //           }} variant="outline">
+  //             Yes
+  //           </Button>
+  //         </div>
+  //       </div>
+  //     ));
+  //     return;
+  //   }
+
+  //   // ✅ Trigger type: completed
+  //   if (step.triggerType === "completed") {
+  //     setData(prev => {
+  //       const updated = [...prev];
+  //       updated[rowIndex].steps = updated[rowIndex].steps.map(s =>
+  //         s.name === stepName ? { ...s, completed: true } : s
+  //       );
+  //       return updated;
+  //     });
+  //     return;
+  //   }
+
+  //   // ✅ Trigger type: popup
+  //   if (step.triggerType === "popup") {
+  //     toast.custom((t) => (
+  //       <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[320px]">
+  //         <p className="text-gray-800 text-sm mb-3">
+  //           {step.popup?.description || "Please confirm this action."}
+  //         </p>
+  //         <div className="flex justify-end space-x-2">
+  //           <Button size="sm" variant="outline" onClick={() => toast.dismiss(t)}>
+  //             Cancel
+  //           </Button>
+  //           <Button
+  //             size="sm"
+  //             onClick={() => {
+  //               setData(prev => {
+  //                 const updated = [...prev];
+  //                 updated[rowIndex].steps = updated[rowIndex].steps.map(s =>
+  //                   s.name === stepName ? { ...s, completed: true } : s
+  //                 );
+  //                 return updated;
+  //               });
+  //               toast.dismiss(t);
+  //               toast.success("Step marked as completed!");
+  //             }}
+  //           >
+  //             OK
+  //           </Button>
+  //         </div>
+  //       </div>
+  //     ),
+  //       {
+  //         position: "top-center", // 👈 only this toast appears at the top center
+  //         duration: 6000, // optional: auto close after 6s
+  //         dismissible: true, // allow click to dismiss
+  //       });
+  //     return;
+  //   }
+
+  //   // ✅ Trigger type: relation
+  //   if (step.triggerType === "relation") {
+  //     const initial = structuredClone(step?.linkedStep?.futureColumnThings || []);
+
+  //     toast.custom((t) => {
+  //       function FutureColumnToast() {
+  //         const [state, setState] = React.useState(initial);
+
+  //         return (
+  //           <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[330px]">
+  //             <p className="text-gray-800 text-sm mb-3">
+  //               You just finished this column. Mark what is needed for the next column:
+  //             </p>
+
+  //             <div className="space-y-2 max-h-[140px] overflow-y-auto mb-3 pr-1">
+  //               {state.map((fc, i) => (
+  //                 <div
+  //                   key={i}
+  //                   className="flex items-center justify-between border rounded px-2 py-2"
+  //                 >
+  //                   <span className="text-xs text-gray-700">{fc.description}</span>
+  //                   <Switch
+  //                     checked={fc.needed}
+  //                     onCheckedChange={(val) => {
+  //                       const copy = [...state];
+  //                       copy[i] = { ...copy[i], needed: val };
+  //                       setState(copy);
+  //                     }}
+  //                   />
+  //                 </div>
+  //               ))}
+  //             </div>
+
+  //             <div className="flex justify-end space-x-2">
+  //               <Button
+  //                 size="sm"
+  //                 variant="outline"
+  //                 onClick={() => toast.dismiss(t)}
+  //               >
+  //                 Cancel
+  //               </Button>
+
+  //               <Button
+  //                 size="sm"
+  //                 onClick={() => {
+  //                   setData(prev =>
+  //                     prev.map((row, rIndex) => {
+  //                       if (rIndex !== rowIndex) return row;
+
+  //                       return {
+  //                         ...row,
+  //                         steps: row.steps.map(s => {
+  //                           if (s.name === stepName) {
+  //                             return {
+  //                               ...s,
+  //                               completed: true,
+  //                               linkedStep: {
+  //                                 ...s.linkedStep!,
+  //                                 futureColumnThings: state,
+  //                               },
+  //                             };
+  //                           }
+
+  //                           if (step?.linkedStep && s.id === step.linkedStep.id) {
+  //                             return { ...s, markedNext: true };
+  //                           }
+
+  //                           return s;
+  //                         }),
+  //                       };
+  //                     })
+  //                   );
+
+  //                   toast.dismiss(t);
+  //                 }}
+  //               >
+  //                 OK
+  //               </Button>
+  //             </div>
+  //           </div>
+  //         );
+  //       }
+
+  //       return <FutureColumnToast />;
+  //     }
+  //       ,
+  //       {
+  //         position: "top-center", // 👈 only this toast appears at the top center
+  //         duration: 6000, // optional: auto close after 6s
+  //         dismissible: true, // allow click to dismiss
+  //       });
+  //     return;
+  //   }
+  // };
 
 
   const handleFinalCheckbox = (
@@ -399,12 +676,32 @@ export default function UserTaskTable() {
       return updated;
     });
   };
+React.useEffect(() => {
+  const saved = localStorage.getItem("user-task-data");
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    setData(parsed);
+    setLastSavedData(JSON.parse(JSON.stringify(parsed))); // deep clone snapshot
+  }
+}, []);
+
+React.useEffect(() => {
+  setHasChanges(JSON.stringify(data) != JSON.stringify(lastSavedData));
+}, [data]);
+
 
   return (
     <div className="flex flex-col items-start w-full pt-4
     ">
-      <AddTaskLine data={data} setData={setData} />
+      <AddTaskLine adminTemplate={adminTemplate} data={data} setData={setData} />
+      <div className="w-full flex flex-row items-center justify-end">
+{hasChanges && (
+  <Button variant="customNormal" onClick={saveToLocalStorage}>
+    Save Changes
+  </Button>
+)}
 
+      </div>
       <Card className="w-full mt-2">
         <CardHeader className="w-full flex flex-row items-center justify-between">
           <CardTitle>Task Progress Table</CardTitle>
@@ -412,16 +709,18 @@ export default function UserTaskTable() {
         </CardHeader>
 
         <CardContent>
-          <div className="min-w-full overflow-x-auto">
+          <div className="min-w-full overflow-auto max-h-[55vh]">
             <table className={`  table-auto border-collapse border w-full ${roboto.className}`}>
-              <thead className="bg-gray-100 overflow-y-visible">
+              <thead className="bg-gray-100 sticky top-[-10] z-[50] h-[80px]">
 
                 <tr className=" overflow-y-visible ">
                   {/* Task Line Checkbox */}
-                  <th className="px-1 h-[20px]  text-center  text-[11px]   pt-8 ">
+                  <th className="px-1 h-[20px]  text-center  text-[11px] sticky left-[-2]  bg-gray-100  pt-8 ">
 
                   </th>
-                  <th className="px-4 h-[20px]  text-center   text-[11px]   pt-8 ">
+                  <th
+                    className="px-4 h-[20px] text-center text-[11px] pt-8 sticky left-[15px] z-[60] bg-gray-100"
+                  >
                     T/L
                   </th>
 
@@ -447,23 +746,21 @@ export default function UserTaskTable() {
                   </th>
 
                   {/* Non-TimeSensitive Step Columns */}
-                  {data[0].steps.map((stepName) => (
+                  {data[0].steps.map((stepName, index) => (
                     <th
                       key={stepName.id}
                       className="cursor-pointer px-4 h-[50px] min-w-[120px] text-center text-[11px]"
                     >
                       <div className="w-full flex flex-col items-center">
-                        <button
+                        {stepName.columnDetails ? <button
                           className="my-2 cursor-pointer"
-                          onClick={() => HeaderDetails([{ color: "white", description: "Hello, This is an email i want you to use for customers copy it from here. and edit it how you would like before sending it off", label: "SF", allowCopy: true }], stepName.name)}
+                          onClick={() => HeaderDetails(stepName.columnDetails as ColumnDetails, stepName.name)}
 
                         >
-                          {/* <CircleQuestionMark 
-                className="text-white"
-            
-             /> */}
+
                           <QuestionMark />
-                        </button>
+                        </button> : <div className="my-4"></div>}
+
                         <p>{"Check Column"}</p>
                       </div>
                     </th>
@@ -497,7 +794,9 @@ export default function UserTaskTable() {
                     {data.map((row: TaskRow, idx: number) => (
                       <DraggableRow key={row.id} id={row.id} className="border border-2 border-b-stone-200  ">
 
-                        <td className={`text-center    w-[80px]   ${row.taskLineChecked ? "bg-red-600" : "bg-stone-200"}`}>
+                        <td
+                          className={`text-center w-[80px] ${row.taskLineChecked ? "bg-red-600" : "bg-stone-200"} sticky left-[16px] z-[49]`}
+                        >
                           <Checkbox
                             variant={row.taskLineChecked ? "default" : "danger"}
                             checked={row.statusTL}
@@ -516,7 +815,6 @@ export default function UserTaskTable() {
                           const colObj = row.otherColumns.find(
                             (col: any) => col.name === headerName
                           );
-                          console.log(index == 0 ? colObj : "sds")
                           return (
                             <td
 
@@ -534,7 +832,7 @@ export default function UserTaskTable() {
                                     : "#1e2939",
                               }}
 
-                              className={`text-center min-w-[140px]  `}
+                              className={`text-center min-w-[140px]  whitespace-nowrap `}
                             >
                               {colObj ? (
                                 colObj.type === "text" ? (
@@ -542,10 +840,7 @@ export default function UserTaskTable() {
                                     type="text"
                                     placeholder="Enter text..."
 
-                                    className={` text-center w-full bg-transparent placeholder:italic focus:outline-none text-xs 
-        
-        `}
-
+                                    className="text-center bg-transparent placeholder:italic focus:outline-none text-xs"
                                     value={colObj.value || ""}
                                     onChange={(e) => {
                                       const newValue = e.target.value;
@@ -724,11 +1019,12 @@ export default function UserTaskTable() {
                                 if (step) {
                                   setNotesPopup({
                                     open: true,
+                                    x: e.clientX,
+                                    y: e.clientY,
                                     rowIndex: idx,
                                     stepName: step.name,
                                     value: step.notes || ""
                                   });
-                                  setOpen(true);
                                 }
                               }}
 
@@ -763,7 +1059,7 @@ export default function UserTaskTable() {
                                         }}
 
 
-                                        className={`flex flex-col items-center w-8/12 h-full ${row.taskLineChecked ? "bg-red-600" : step ? step.completed ? "bg-lime-500"
+                                        className={`relative flex flex-col items-center w-8/12 h-full ${row.taskLineChecked ? "bg-red-600" : step ? step.completed ? "bg-lime-500"
                                           : step.markedNext ? "bg-yellow-300"
                                             : step.markedNextRed ? "bg-red-200" : "bg-gray-200" : ""}`}>
                                         {/* Notes icon */}
@@ -775,12 +1071,15 @@ export default function UserTaskTable() {
 
                                         {!row.taskLineChecked ? (
                                           <div className="flex flex-col items-center justify-center h-full">
+
                                             {step ? (
-                                              <Checkbox
-                                                variant={step.completed ? "white" : step.markedNext ? "yellow" : "success"}
-                                                checked={step.completed}
-                                                onCheckedChange={(v) => handleCheckbox(idx, step.name, v)}
-                                              />
+                                              <>
+                                                <Checkbox
+                                                  variant={step.completed ? "white" : step.markedNext ? "yellow" : "success"}
+                                                  checked={step.completed}
+                                                  onClick={(e) => e.stopPropagation()}
+                                                  onCheckedChange={(v) => handleCheckbox(idx, step.name, v)}
+                                                /></>
                                             ) : (
                                               <span className={`${row.taskLineChecked ? "text-gray-200" : "text-gray-400"} text-xs`}>-</span>
                                             )}
@@ -801,6 +1100,7 @@ export default function UserTaskTable() {
                                       <div className="flex flex-col items-start">
                                         <h1 className="font-bold text-black">Notes</h1>
                                         <p>{step.notes}</p>
+
                                       </div>
                                     </TooltipContent>
                                   )}
@@ -842,6 +1142,8 @@ export default function UserTaskTable() {
         </CardContent>
       </Card>
       <NotesDialog
+        notesPopup={notesPopup}
+        setNotesPopup={setNotesPopup}
         open={notesPopup.open}
         stepName={notesPopup.stepName}
         value={notesPopup.value}
@@ -855,4 +1157,5 @@ export default function UserTaskTable() {
   );
 }
 
+export default UserTaskTable;
 

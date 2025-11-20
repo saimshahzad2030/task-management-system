@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 
-import { AdminTemplate, Step, TaskRow } from "@/global/types";
-import { adminTemplates as aT } from "@/global/constant";
-import ViewModal from "./ViewModal";
-import EditModal from "./EditModal";
+import { AdminTemplate, Categories,   ColumnDetails,   Step, TaskRow } from "@/global/types";
+import { adminTemplates as aT } from "@/global/constant"; 
 import ColumnHeaderTable from "./ColumnHeaderTable";
 import { X } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
+import { Switch } from "../ui/switch";
 
 const showRequiredToast = (title: string, desc: string) => {
   toast.custom((t) => (
@@ -32,7 +32,7 @@ const showRequiredToast = (title: string, desc: string) => {
 
 export default function AdminTemplates() {
   const resetForm = () => {
-  setCategory("");
+  setCategories([]);
   setColor("#000000");
   setDescription("");
   setWarningColor("#FFD93D");
@@ -42,12 +42,13 @@ export default function AdminTemplates() {
       id: 1,
       name: "",
       completed: false,
+        columnDetailsChecked:false,
+
       type: "check",
-      trigger: "completed",
-      timeSensitive: false,
+      trigger: "completed", 
       info: "",
       popup: { description: "" },
-      columnDetails: null,
+      columnDetails: [],
       linkedStep: null,
     },
   ]);
@@ -59,14 +60,15 @@ export default function AdminTemplates() {
   
   
   const [editingTemplate, setEditingTemplate] = useState<AdminTemplate | null>(null);
-
+  const [columnDetails,setColumnDetails]=useState<ColumnDetails>([])
   const [adminTemplates, setAdminTemplates] = React.useState<AdminTemplate[] | []>(aT)
   const [showForm, setShowForm] = useState(false);
   const [edit, setEdit] = useState(false);
 
   // new template state
-  const [category, setCategory] = useState("");
+  const [categories, setCategories] = useState<Categories[]>([]);
   const [warningColor, setWarningColor] = useState("#FFD93D"); // 6 days
+  const [templateName, setTemplateName] = useState(""); // 6 days
 const [dangerColor, setDangerColor] = useState("#FF6B6B");
   const [color, setColor] = useState("#000000");
   const [description, setDescription] = useState("");
@@ -88,8 +90,7 @@ const handleEditTemplate = (tmpl: AdminTemplate) => {
   setEditingTemplate(tmpl);
 
   // Pre-fill form fields
-  setCategory(tmpl.category);
-  setColor(tmpl.color);
+  setCategories(tmpl.categories); 
   setDescription(tmpl.description);
   setWarningColor(tmpl?.timeSensitiveColors?.warning.color || 'yellow');
   setDangerColor(tmpl?.timeSensitiveColors?.danger.color || 'red');
@@ -135,16 +136,40 @@ toast.custom((t) => (
         type: "check",
         trigger: "completed",
         timeSensitive: false,
+        columnDetailsChecked:false,
         info: "",
         popup: { description: null },
-        columnDetails: null,
+        columnDetails: [],
         linkedStep: null
       },
     ]);
   };
+ const addCategory = () => {
+    setCategories(prev => [
+      ...prev,
+      {
+        id: prev.length + 1,
+        color:"#000000",
+        name: "",
+        
+      },
+    ]);
+  };
+ const updateCategory = <K extends keyof Categories>(
+  index: number,
+  field: K,
+  value: Categories[K]
+) => {
+  setCategories(prev => {
+    const copy = [...prev];
+    copy[index][field] = value;
+    return copy;
+  });
+};
 
   // Update step field dynamically
   const updateStep = (index: number, field: string, value: any) => {
+ 
     setSteps(prev => {
       const copy = [...prev];
       //@ts-ignore
@@ -181,9 +206,12 @@ toast.custom((t) => (
   const removeStep = (index: number) => {
     setSteps(prev => prev.filter((_, i) => i !== index));
   };
+   const removeCategory = (index: number) => {
+    setCategories(prev => prev.filter((_, i) => i !== index));
+  };
 
   const saveTemplate = () => {
-      if (!category.trim()) {
+      if (!categories) {
     showRequiredToast(
       "Category Required",
       "Category name is required for creating a template."
@@ -230,7 +258,7 @@ toast.custom((t) => (
     // ----------------------
     const updated = {
       ...editingTemplate,
-      category,
+      categories,
       color,
       description,
       steps,
@@ -240,7 +268,7 @@ toast.custom((t) => (
       },
       updatedAt: new Date()
     };
-
+    console.log("updated")
     setAdminTemplates(prev =>
       prev.map(t => (t.id === editingTemplate.id ? updated : t))
     );
@@ -252,8 +280,8 @@ toast.custom((t) => (
     // ----------------------
     const newTemplate: AdminTemplate = {
       id: "tmpl_" + Date.now(),
-      category,
-      color,
+      name:templateName,
+      categories, 
       description,
       timeSensitiveColors: {
         warning: { days: 6, color: warningColor },
@@ -263,11 +291,11 @@ toast.custom((t) => (
       createdAt: new Date(),
       updatedAt: new Date()
     };
-
+    console.log(newTemplate,"newTemplate")
     setAdminTemplates(prev => [...prev, newTemplate]);
     toast.success("New template created!");
   }
-
+  setData(null)
   // Reset form
   resetForm(); 
   };
@@ -286,17 +314,7 @@ toast.custom((t) => (
   //       },
   //       steps,
   //     };
-  // console.log({
-  //       id: "tmpl_" + Date.now(),
-  //       category,
-  //       color,
-  //       description,
-  //       timeSensitiveColors: {
-  //         warning: { days: 6, color: "#FFD93D" },
-  //         danger: { days: 3, color: "#FF6B6B" },
-  //       },
-  //       steps,
-  //     })
+   
   //     setAdminTemplates(prev => [...prev, newTemplate]);
 
   //     // reset
@@ -327,15 +345,15 @@ toast.custom((t) => (
 
       {showForm && (
         <div className="space-y-4 border p-4 rounded ">
-          <ColumnHeaderTable category={category} color={color} description={description} steps={steps} data={data} setData={setData} />
+          <ColumnHeaderTable name={templateName} categories={categories} color={color} description={description} steps={steps} data={data} setData={setData} />
           {/* Category Settings */}
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-md bg-gray-200 p-4">
-              <label className="text-sm font-semibold">Category Name</label>
-              <Input className="bg-white border border-gray-400" value={category} onChange={e => setCategory(e.target.value)} />
+              <label className="text-sm font-semibold"> Name</label>
+              <Input className="bg-white border border-gray-400" value={templateName} onChange={e => setTemplateName(e.target.value)} />
             </div>
 
-            <div className="rounded-md bg-gray-200 p-4">
+            {/* <div className="rounded-md bg-gray-200 p-4">
               <label className="text-sm font-semibold">Category Color</label>
               <div className="transform scale-75 origin-left">
                 <Input
@@ -345,7 +363,7 @@ toast.custom((t) => (
                   className="w-8 h-8 p-0 border-none rounded-xl"
                 />
               </div>
-            </div>
+            </div> */}
             <div className="col-span-1 rounded-md bg-gray-200 p-4 ">
             <label className="text-sm font-semibold">Description</label>
             <Textarea className="bg-white border border-gray-400" value={description} onChange={e => setDescription(e.target.value)} />
@@ -380,9 +398,49 @@ toast.custom((t) => (
               </div>
           </div>
 
-         
-        
- 
+         <h3 className="font-bold text-md mt-2 mb-0">Categories</h3>
+       <div className="w-full grid grid-cols-5 gap-x-4">
+         {categories.map((step, index) => (
+            <div style={{border:`2px solid ${step.color}`}} key={index} className="mt-4 border p-3 rounded-lg bg-gray-100 space-y-2">
+              
+              <div className="flex justify-between">
+                
+                <span className="font-semibold">Category {index + 1}</span>
+                {steps.length > 1 && (
+                  <Button  size="sm" onClick={() => removeStep(index)}>
+                    <X/>
+                  </Button>
+                )}
+              </div>
+
+              <Input
+                placeholder="Category Name"
+                value={step.name}
+                className="border border-gray-400  bg-white"
+                onChange={e => updateCategory(index, "name", e.target.value)}
+              />
+
+               
+            <div className="rounded-md bg-gray-100 flex flex-row items-center"> 
+              <div className="transform scale-75 origin-left ">
+                <Input
+                  type="color"
+                  value={step.color}
+                 onChange={e => updateCategory(index, "color", e.target.value)}
+
+                  className="w-8 h-8 p-0 border-none rounded-xl cursor-pointer"
+                />
+              </div>
+                <label className="text-[9px]  text-gray-500 ">Change Color</label>
+            </div>
+
+              
+            </div>
+          ))}
+       </div>
+   <Button onClick={addCategory} variant="customNormal">
+            + Add Category
+          </Button>
           {/* Steps Section */}
           <h3 className="font-bold text-md mt-2">Columns</h3>
 
@@ -419,7 +477,7 @@ toast.custom((t) => (
                 </div>
 
                 {/* Trigger */}
-                {step.type == 'check' && <div className="">
+                {step.type == 'check' && <div className="col-span-2">
 
                   <label className="text-xs">Trigger</label>
                   <Select  onValueChange={(v) => updateStep(index, "trigger", v)} defaultValue={step.trigger}>
@@ -448,7 +506,7 @@ toast.custom((t) => (
 
                   )}
                   {step.trigger === "relation" &&
-                    steps.filter(s => s.type === "check").length > 1 &&
+                    <>{steps.filter(s => s.type === "check").length > 1 &&
                     step.type === "check" && (
                       <div>
                         <label className="text-xs">Related Step</label>
@@ -473,6 +531,101 @@ toast.custom((t) => (
                         </Select>
                       </div>
                     )}
+                    <label className="text-xs font-semibold text-gray-700 mt-3">
+             Things to do before marking that related column
+            </label>
+                     <div className="    rounded  w-auto">
+            
+
+            <div className="space-y-2 mt-2 mb-2 w-full">
+              {(step.linkedStep?.futureColumnThings || []).map((item, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 p-2 bg-white border rounded"
+                >
+                  {/* Description Field */}
+                  <input
+                    type="text"
+                    className="flex-1 text-xs border rounded px-2 py-1"
+                    placeholder="Description"
+                    value={item.description}
+                    onChange={(e) => {
+                      const copy = step.linkedStep?.futureColumnThings
+                        ? [...step.linkedStep.futureColumnThings]
+                        : [];
+
+                      copy[i] = {
+                        ...copy[i],
+                        description: e.target.value,
+                      };
+
+                      updateStep(index, "linkedStep", {
+                        ...step.linkedStep,
+                        futureColumnThings: copy,
+                      });
+                    }}
+                  />
+
+                  {/* Needed Switch */}
+                  <span className="text-xs text-gray-600">Needed?</span>
+                  <Switch
+                    checked={item.needed}
+                    onCheckedChange={(val) => {
+                      const copy = step.linkedStep?.futureColumnThings
+                        ? [...step.linkedStep.futureColumnThings]
+                        : [];
+
+                      copy[i] = { ...copy[i], needed: val };
+
+                      updateStep(index, "linkedStep", {
+                        ...step.linkedStep,
+                        futureColumnThings: copy,
+                      });
+                    }}
+                  />
+
+                  {/* Remove Button */}
+                  <button
+                    className="text-gray-700 text-sm cursor-pointer"
+                    onClick={() => {
+                      const copy = step.linkedStep?.futureColumnThings
+                        ? [...step.linkedStep.futureColumnThings]
+                        : [];
+
+                      copy.splice(i, 1);
+
+                      updateStep(index, "linkedStep", {
+                        ...step.linkedStep,
+                        futureColumnThings: copy,
+                      });
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Add New Field */}
+            <button
+              className="rounded-lg cursor-pointer  text-xs px-2 py-1 border rounded bg-white"
+              onClick={() => {
+                const prev = step.linkedStep?.futureColumnThings || [];
+                const updated = [
+                  ...prev,
+                  { needed: false, description: "" },
+                ];
+
+                updateStep(index, "linkedStep", {
+                  ...step.linkedStep,
+                  futureColumnThings: updated,
+                });
+              }}
+            >
+              + Add Thing
+            </button>
+          </div>
+                    </>}
                 </div>}
 
                 {/* Time Sensitive */}
@@ -496,59 +649,85 @@ toast.custom((t) => (
 
                 {/* COLUMN DETAILS SECTION */}
                 {step.type === "check" && (
-                  <div className="w-full">
+                  <div className="w-full col-span-4">
 
                     {/* Checkbox to toggle UI */}
-                    <label className="flex items-center  my-2 cursor-pointer ml-2">
+                    <label className="flex items-center  mt-2 cursor-pointer ">
+                      <span className="text-sm mr-2">Add Column Details</span>
                       <input
                         type="checkbox" 
-                        checked={!!step.columnDetails}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
+                        checked={!!step.columnDetailsChecked}
+                       onChange={(e) => {
+  const checked = e.target.checked;
 
-                          updateStep(index, "columnDetails", checked
-                            ? { description: "", copyEnabled: false }
-                            : null
-                          );
-                        }}
+  // Build columnDetails array only if checked
+  const updatedArray = checked
+    ? categories.map((cat) => ({
+        description: "",
+        copyEnabled: false,
+        category: cat,
+      }))
+    : null; // set to null if unchecked
+
+  // Update the step state
+  updateStep(index, "columnDetailsChecked", checked);
+  updateStep(index, "columnDetails", updatedArray);
+}}
+
                       />
-                      <span className="text-sm ml-2">Add Column Details</span>
                     </label>
 
                     {/* Render the panel if columnDetails exists */}
-                    {step.columnDetails && (
-                      <div className="   mt-[44px] p-3 rounded border border-gray-400 bg-white space-y-3">
-
-                        {/* Description Textarea */}
-                        <Textarea
-                        className=""
-                          placeholder="Details / Instructions"
-                          value={step.columnDetails.description}
+                    {step.columnDetailsChecked && <div className="grid grid-cols-3 gap-2 w-full  rounded-md">
+                    
+                    <>
+                    <p className="col-span-3 text-gray-500 text-xs">Below are the details of this column with respect to the template Categories.</p>
+                  {Array.isArray(step.columnDetails) &&  step.columnDetails.map((cat, catIndex) => (
+                        <div key={catIndex} className="my-1 flex flex-col items-start w-full border border-gray-500 rounded-md p-2">
+                
+                          <div className="flex flex-row items-center ">
+                            <h3 className="font-semibold text-gray-600 text-sm">{`(Category ${catIndex+1}) `}<span className="text-xs text-gray-500">{cat.category.name}</span></h3>
+                          <div className="ml-2 w-4 h-4 rounded-full" style={{backgroundColor:cat.category.color}}></div>
+                          </div>
+                          <div className=" w-full   mt-2  rounded border      flex flex-row items-center">
+                           
+                          <Textarea
+                        className="w-10/12 bg-white border border-gray-400  "
+                          placeholder="Column Details"
+                          value={step.columnDetails ? step.columnDetails[catIndex].description : ""}
                           onChange={(e) =>
-                            updateStep(index, "columnDetails", {
-                              ...step.columnDetails,
-                              description: e.target.value,
-                            })
-                          }
+                           {
+                            if (!Array.isArray(step.columnDetails)) return
+                            const updated = step?.columnDetails.map((item, i) =>
+    i === catIndex ? { ...item, description: e.target.value } : item
+  ); 
+  updateStep(index, "columnDetails", updated);
+                          }}
                         />
+                   
+                      
 
-                        {/* Copy Enabled Checkbox */}
-                        <label className="flex items-center gap-2 cursor-pointer">
+                         <label className="flex items-center gap-2 cursor-pointer ml-4">
                           <input
                             type="checkbox"
-                            checked={step.columnDetails.copyEnabled}
+                            checked={step.columnDetails ? step.columnDetails[catIndex].copyEnabled : false}
                             onChange={(e) =>
-                              updateStep(index, "columnDetails", {
-                                ...step.columnDetails,
-                                copyEnabled: e.target.checked,
-                              })
+                             {
+                              if (!Array.isArray(step.columnDetails)) return
+                              const updated = step.columnDetails.map((item, i) =>
+    i === catIndex ? { ...item, copyEnabled: e.target.checked } : item
+  );
+  updateStep(index, "columnDetails", updated);}
                             }
                           />
                           <span className="text-xs">Enable Copy Button</span>
                         </label>
 
                       </div>
-                    )}
+                        </div>
+                      ))}
+                         </>
+                    </div>}
 
                   </div>
                 )}
@@ -583,8 +762,7 @@ toast.custom((t) => (
         <table className="mt-3 w-full border-collapse text-sm">
           <thead>
             <tr className="bg-gray-100">
-              <th className="border px-3 py-2 text-left">Category</th>
-              <th className="border px-3 py-2 text-left">Color</th>
+              <th className="border px-3 py-2 text-left">Name</th> 
               <th className="border px-3 py-2 text-left">Total Steps</th>
               <th className="border px-3 py-2 text-left">Description</th>
               <th className="border px-3 py-2 text-left">Created At</th>
@@ -595,17 +773,14 @@ toast.custom((t) => (
 
           <tbody>
             {adminTemplates.map((t) => {
-              const timeSensitiveCount = t.steps.filter(s => s.timeSensitive).length;
-
+               
               return (
                 <tr key={t.id}>
-                  <td className="border px-3 py-2 font-semibold capitalize" style={{ color: t.color }}>
-                    {t.category}
+                  <td className="border px-3 py-2 font-semibold capitalize"  >
+                    {t.name}
                   </td>
 
-                  <td className="border px-3 py-2">
-                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: t.color }}></div>
-                  </td>
+                  
 
                   <td className="border px-3 py-2">
                     {t.steps.filter((s)=>{return s.type=='check'}).length}
@@ -631,6 +806,9 @@ toast.custom((t) => (
               </button>
 
              */}
+             <Link className="  underline cursor-pointer " href={`${process.env.FRONTEND_URL}user-tasks/${t.id}`}   target="_blank" 
+  rel="noopener noreferrer" passHref>
+              Open </Link>
  <button
                       className="text-blue-600 underline cursor-pointer "
                       onClick={() =>handleEditTemplate(t)}

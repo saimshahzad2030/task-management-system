@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button"; // or your own button
-import { AdminTemplate, FinalColumnKey, ListStep, Step, TaskRow } from "@/global/types";
+import { AdminTemplate, Categories, ColumnDetails, FinalColumnKey, ListStep, Step, TaskRow } from "@/global/types";
 import HeaderDetails from "../UserTaskTable/HeaderDetails";
 import { Flag, MarkedNotes, QuestionMark } from "@/global/icons";
 
@@ -13,14 +13,15 @@ import { Calendar } from "../ui/calendar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { cn } from "@/lib/utils";
 export interface ColumnHeaderTableProps {
-  category: string;
+  name: string; 
+  categories:Categories[];
   color: string;
   description: string;
   data:TaskRow | null;
   setData: React.Dispatch<React.SetStateAction<TaskRow | null>>;
   steps: Step[];
 }
-const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({ category, color, description, steps ,data,setData}) => {
+const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({  categories,name, color, description, steps ,data,setData}) => {
 
   const [columns, setColumns] = useState([
     { id: "col1", label: "COLUMN 1" },
@@ -55,12 +56,11 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({ category, color, 
     <div className="flex flex-row items-center justify-end w-full">
       {steps.length>0 && steps.every((s)=>s.name) && <Button
       className="my-4 cursor-pointer"
-    onClick={() => {
-      console.log(steps,"steps")
+    onClick={() => { 
     const template: AdminTemplate = {
       id: "tmp_" + Date.now(),
-      category,
-      color,
+      name, 
+      categories,
       description,
       steps,
       timeSensitiveColors: {
@@ -80,10 +80,12 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({ category, color, 
 
     const newTask: TaskRow = {
       id: crypto.randomUUID(),
-      category: template.category,
+      template: template,
+      // name: template.name,
+      category:{id:2,name:name ||"Unnamed", color:color ||"#000000"},
       taskLineChecked: false,
       timeSensitiveDate: null,
-      color: template.color,
+      color: 'red', 
       otherColumns: dynamicOtherColumns,
      steps: template.steps
   .filter((s) => s.type === "check") // ✅ ONLY check-type steps
@@ -97,8 +99,7 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({ category, color, 
     completed: false,
 
     // ✅ time sensitive
-    timeSensitive: s.timeSensitive ?? false,
-    timeSensitiveDate: s.timeSensitive ? "" : null,
+    
 
     // Use admin description/info (fallback to "")
     description: s.description || s.info || "",
@@ -144,7 +145,10 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({ category, color, 
                       T/L
                     </th>
 
-                     
+                     <th className="px-4 h-[20px]  text-center   text-[11px]   pt-8 ">
+                      Categories
+                    </th>
+
                     {data.otherColumns.map((col: any,index)    => (
                       <th
                         key={index}
@@ -167,9 +171,9 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({ category, color, 
                         className="cursor-pointer px-4 h-[50px] min-w-[120px] text-center text-[11px]"
                       >
                         <div className="w-full flex flex-col items-center">
-                          {stepName.columnDetails ? <button
+                          {Array.isArray(stepName.columnDetails) && stepName.columnDetails.length>0 ? <button
                             className="my-2 cursor-pointer"
-                            onClick={() => HeaderDetails(  [{color,description:stepName.columnDetails?.description || "",label:"SF",allowCopy:stepName.columnDetails?.copyEnabled || false}],stepName.name)}
+                            onClick={() => HeaderDetails( stepName.columnDetails as ColumnDetails,stepName.name)}
 
                           >
                              
@@ -196,6 +200,8 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({ category, color, 
         <tbody
         className="border border-2 border-b-stone-200  ">
         
+                                  {categories.map((cat)=>(
+            <tr key={cat.id} className="  border-b border-b-stone-200  ">
                                   <td className={`text-center    w-[80px]   ${data.taskLineChecked ? "bg-red-600" : "bg-stone-200"}`}>
                                     <Checkbox
                                       variant={data.taskLineChecked ? "default" : "danger"}
@@ -203,12 +209,14 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({ category, color, 
                                       // onCheckedChange={(v) => handleTaskLineCheckbox(idx)}
                                     />
                                   </td>
+                                  <td className={`text-center     w-[80px]   ${data.taskLineChecked ? "bg-red-600" : "bg-stone-200"}`}>
+                                  <div className="w-full h-[30px] text-xs text-white flex flex-col items-center justify-center" style={{backgroundColor:cat.color}}>{cat.name}</div>
+                                  </td>
           {data.otherColumns.map((headerName, index) => {
                             const colObj = data.otherColumns.find(
                               (col: any) => col.name === headerName.name
                             );
-                            console.log(index == 0 ? colObj : "sds")
-                            return (
+                           return (
                               <td
 
                                 key={index}
@@ -501,6 +509,8 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({ category, color, 
                           
                           
                                                       </td>
+                                  </tr>
+                                  ))}
         </tbody>
       </table>
     </div>}

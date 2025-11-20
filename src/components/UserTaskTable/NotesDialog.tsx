@@ -1,8 +1,10 @@
 "use client";
-import React from "react";
+import React, { Dispatch, SetStateAction, useRef } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NotesPopupState } from "@/global/types";
+import { X } from "lucide-react";
 
 interface NotesDialogProps {
   open: boolean;
@@ -12,6 +14,9 @@ interface NotesDialogProps {
   onSave: () => void;
   onClose: () => void;
   onDelete:()=>void;
+  setNotesPopup: Dispatch<SetStateAction<NotesPopupState>>;
+  notesPopup: NotesPopupState;
+
 }
 
 export default function NotesDialog({
@@ -21,28 +26,75 @@ export default function NotesDialog({
   onChange,
   onSave,
   onDelete,
+  notesPopup, 
+  setNotesPopup,
   onClose
 }: NotesDialogProps) {
+  const popupRef = useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+  function handleClickOutside(e: MouseEvent) {
+    if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+      setNotesPopup(prev => ({ ...prev, open: false }));
+    }
+  }
+
+  if (notesPopup.open) {
+    document.addEventListener("mousedown", handleClickOutside);
+  }
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, [notesPopup.open, setNotesPopup]);
+
+ if (!notesPopup.open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[400px]">
-        <DialogHeader>
-          <DialogTitle>Add Notes </DialogTitle>
-        </DialogHeader>
+    <div
+      ref={popupRef}
+      className="fixed z-50 bg-white border shadow-lg p-4 rounded-md w-[250px]"
+      style={{
+        top: notesPopup.y + 5,
+        left: notesPopup.x + 5
+      }}
+    >
+      <div className="w-full flex flex-row items-end justify-end">
+<X className="w-4 h-auto cursor-pointer" onClick={()=>
+          setNotesPopup((prev) => ({ ...prev,  open:false }))}/>
 
-        <Input
-          placeholder="Write notes..."
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        />
+      </div>
+      <p className="font-bold text-sm mb-2">{notesPopup.stepName}</p>
 
-        <DialogFooter>
-          {value && <Button variant="secondary" onClick={onDelete}>
+      <Input
+        value={notesPopup.value}
+        onChange={(e) =>
+          setNotesPopup((prev) => ({ ...prev, value: e.target.value }))
+        }
+        placeholder="Write notes..."
+      />
+
+      <div className="flex justify-between mt-3">
+        {notesPopup.value && (
+          <Button
+            variant="secondary"
+            onClick={() => {
+              onDelete();
+              setNotesPopup((prev) => ({ ...prev, open: false }));
+            }}
+          >
             Delete
-          </Button>}
-          <Button onClick={onSave}>Save</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </Button>
+        )}
+
+        <Button
+          onClick={() => {
+            onSave();
+            setNotesPopup((prev) => ({ ...prev, open: false }));
+          }}
+        >
+          Save
+        </Button>
+      </div>
+    </div>
   );
 }

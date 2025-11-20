@@ -21,11 +21,11 @@ export default function DraggableRow({ id, children,className }: any) {
   };
 
   return (
-    <tr className={className} ref={setNodeRef} style={style}>
+    <tr className={`${className} `} ref={setNodeRef} style={style}>
       <td
         {...attributes}
         {...listeners}
-        className="w-[30px] text-center cursor-grab hover:bg-gray-200"
+        className="w-[30px] text-center cursor-grab hover:bg-gray-200 border border-t-0 border-r-0  sticky bg-white left-[-1] z-[49]"
       >
         <GripVertical className="text-gray-600" size={16} />
       </td>

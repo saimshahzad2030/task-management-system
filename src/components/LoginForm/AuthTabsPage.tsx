@@ -50,8 +50,7 @@ export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) =
   const submit = async (data: SignupFormValues) => {
     if (onSubmit) return onSubmit(data);
     // Example placeholder: replace with your API call
-    console.log('Signup data:', data);
-    // reset() if you want to clear the form on success
+   // reset() if you want to clear the form on success
   };
 
   return (
@@ -127,8 +126,7 @@ const router = useRouter()
     toast.dismiss(loadingToast);
     toast.error("Something went wrong!");
   }
-    console.log('Login data:', data);
-  };
+   };
 
   return (
     <Card className="w-full max-w-md">

@@ -12,29 +12,31 @@ export type StepKey =
   "step12"
   | "step11";
 
- 
+
 export type FixedColumnKey = "category" | "vehicle" | "date1";
 
  
 export type FinalColumnKey = "statusTL" | "completed";
- export type ColumnDetails = null |  {
+ export type ColumnDetails = {
     description:string;
     copyEnabled:boolean;
-    adminTemplate?:AdminTemplate;
-  };
+    category:Categories;
+  }[] ;
 // Single step in a template or user task
 export interface Step {
   id:number;
+  columnDetailsChecked:boolean
   columnDetails?:ColumnDetails ;
   name: string;                           // Step name or label
   description?: string;                   // Optional extra details for users
   completed?: boolean;                     // For user tasks (false by default)
-  timeSensitive?: boolean;                 // If true, color-code by deadlines
-  timeSensitiveDate?: string | null;       // Actual date if applicable
-  type?: "text" | "check" | "date";       // Optional step input type
+    type?: "text" | "check" | "date";       // Optional step input type
   trigger?: "popup" | "relation" | "completed" ; // Admin trigger type
    popup?:{description:string | null} | null
-    linkedStep?:{id:number } | null
+    linkedStep?:{id:number , futureColumnThings?:{
+        needed:boolean;
+        description:string;
+      }[]} | null
   info?: string | null;                          // Instruction, note, or email text
 }
 export interface ListStep {
@@ -45,16 +47,14 @@ export interface ListStep {
     name: string;
     markedNext?: boolean;
     markedNextRed?:boolean;
-    completed: boolean;
-    timeSensitive: boolean;
-    notes?:string;
-    timeSensitiveDate: string | null;
+    completed: boolean; 
+    notes?:string; 
     description: string;
     triggerType:"popup" | "relation" | "completed"
     popup?:{description:string}
     linkedStep?:{id:number,
        
-      requiredThings:{description:string}[],
+     
       futureColumnThings?:{
         needed:boolean;
         description:string;
@@ -64,9 +64,8 @@ export interface ListStep {
 // Admin-created reusable template
 export interface AdminTemplate {
   id: string;
-  category: string;
-
-  color: string;
+  name: string;
+ categories:Categories[];
   description: string;
   createdAt?:Date;
   updatedAt?:Date;
@@ -76,14 +75,15 @@ export interface AdminTemplate {
   };
   steps: Omit<Step, "completed" | "timeSensitiveDate">[];
 }
- 
+ export interface Categories{color:string, name:string,id:number};
 // User-created task line (based on admin template)
 export interface TaskRow {
   id: string;
     createdAt?:Date;
   updatedAt?:Date;
     color: string;
-  category: string;
+    category?:{id:number;color:string; name:string;};
+  template: AdminTemplate;
   taskLineChecked: boolean;
   timeSensitiveDate: string | null;
   timeSensitiveColors: {
@@ -108,3 +108,12 @@ export type FlagProps = {
    onToggle: (value: boolean) => void;
   color?: string; // ✅ custom color support
 };
+
+export   interface NotesPopupState {
+  open: boolean;
+  x: number;
+  y: number;
+  rowIndex: number | null;
+  stepName: string;
+  value: string;
+}
