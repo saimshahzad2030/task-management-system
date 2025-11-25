@@ -63,10 +63,7 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({  categories,name,
       categories,
       description,
       steps,
-      timeSensitiveColors: {
-        warning: { days: 6, color: "#FFD93D" },
-        danger: { days: 3, color: "#FF6B6B" },
-      },
+      
     };
 
     const dynamicOtherColumns = template.steps
@@ -75,6 +72,10 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({  categories,name,
         name: step.name,
         type: (step.type ?? "text") as "text" | "date" | "check",
         value: "",
+        timeSensitiveColors:  {
+  warning: { days: 6, color: "#FFD93D" },
+  danger: { days: 3, color: "#FF6B6B" },
+},
         columnId: idx + 1,
       }));
 
@@ -124,10 +125,7 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({  categories,name,
   })),
       statusTL: false,
       completed: false,
-      timeSensitiveColors: template.timeSensitiveColors ?? {
-  warning: { days: 6, color: "#FFD93D" },
-  danger: { days: 3, color: "#FF6B6B" },
-},
+      
     };
 
     setData(newTask); // this triggers table render
@@ -210,7 +208,7 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({  categories,name,
                                     />
                                   </td>
                                   <td className={`text-center     w-[80px]   ${data.taskLineChecked ? "bg-red-600" : "bg-stone-200"}`}>
-                                  <div className="w-full h-[30px] text-xs text-white flex flex-col items-center justify-center" style={{backgroundColor:cat.color}}>{cat.name}</div>
+                                  <div className="w-full h-[34px] text-xs text-white flex flex-col items-center justify-center" style={{backgroundColor:cat.color}}>{cat.name}</div>
                                   </td>
           {data.otherColumns.map((headerName, index) => {
                             const colObj = data.otherColumns.find(
@@ -224,7 +222,7 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({  categories,name,
                                   backgroundColor: data.taskLineChecked
                                     ? "#e7000b"
                                     : index === 0
-                                      ? data.color
+                                      ? cat.color
                                       : "white",
                                   color: data.taskLineChecked
                                     ? "white"
@@ -325,7 +323,7 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({  categories,name,
                                       (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
                                     );
 
-                                    const { warning, danger } = data.timeSensitiveColors || {};
+                                    const { warning, danger } = data.otherColumns[0]?.timeSensitiveColors || {};
                                     if (danger && diffDays <= danger.days) bgColor = danger.color;
                                     else if (warning && diffDays <= warning.days) bgColor = warning.color;
                                   }

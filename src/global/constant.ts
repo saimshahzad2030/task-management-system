@@ -1,4 +1,4 @@
-import { AdminTemplate, FixedColumnKey, TaskRow } from "./types";
+import { AdminTemplate,   TaskRow } from "./types";
 
 
 export const adminTemplates: AdminTemplate[] = [
@@ -13,10 +13,7 @@ export const adminTemplates: AdminTemplate[] = [
       { id: 4, color: "#75ff33", name: "cat-4" },
       { id: 5, color: "#b833ff", name: "cat-5" },
     ],
-    timeSensitiveColors: {
-      warning: { days: 6, color: "#FFD93D" },
-      danger: { days: 3, color: "#FF6B6B" },
-    },
+    
 
     steps: [
       { columnDetailsChecked: false, id: 1, name: "Verify Customer Info", type: "text", trigger: "completed", info: "Ensure the customer and vehicle data match the database." },
@@ -45,11 +42,7 @@ export const adminTemplates: AdminTemplate[] = [
     id: "tmpl2",
     name: "CATEGORY 2",
     description: "Standard maintenance checklist template.",
-
-    timeSensitiveColors: {
-      warning: { days: 6, color: "#FFD93D" },
-      danger: { days: 3, color: "#FF6B6B" },
-    },
+ 
 
     steps: [
       { columnDetailsChecked: false, id: 1, name: "Collect Service Request", type: "text", trigger: "completed", info: "Record customer service request details." },
@@ -103,12 +96,7 @@ export const adminTemplates: AdminTemplate[] = [
     ],
 
     description: "Emission testing and approval workflow.",
-
-    timeSensitiveColors: {
-      warning: { days: 6, color: "#FFD93D" },
-      danger: { days: 3, color: "#FF6B6B" },
-    },
-
+ 
     steps: [
       { columnDetailsChecked: false, id: 1, name: "Intake completed", type: "text", trigger: "completed", info: "Confirm initial intake form with customer." },
       { columnDetailsChecked: false, id: 2, name: "Order Parts", type: "check", trigger: "completed", info: "Order missing or required parts before next step." },
@@ -134,10 +122,7 @@ export const sampleData: TaskRow[] = [
     color: "#0070f3",
     taskLineChecked: false,
     timeSensitiveDate: "2025-11-10",
-    timeSensitiveColors: {
-      warning: { days: 6, color: "#FFD93D" },
-      danger: { days: 3, color: "#FF6B6B" },
-    },
+   
     otherColumns: [
       { columnId: 1, name: "Customer Name", type: "text" },
       { columnId: 2, name: "Maintenance Date", type: "date" },
@@ -198,10 +183,7 @@ export const sampleData: TaskRow[] = [
     template: adminTemplates[0],
     taskLineChecked: false,
     timeSensitiveDate: "2025-11-14",
-    timeSensitiveColors: {
-      warning: { days: 6, color: "#FFD93D" },
-      danger: { days: 3, color: "#FF6B6B" },
-    },
+    
     otherColumns: [
       { columnId: 1, name: "Customer Name", type: "text" },
       { columnId: 2, name: "Maintenance Date", type: "date" },
@@ -236,10 +218,7 @@ export const sampleData: TaskRow[] = [
     template: adminTemplates[1],
     taskLineChecked: false,
     timeSensitiveDate: "2025-11-08",
-    timeSensitiveColors: {
-      warning: { days: 6, color: "#FFD93D" },
-      danger: { days: 3, color: "#FF6B6B" },
-    },
+    
     otherColumns: [
       { columnId: 1, name: "Customer Name", type: "text" },
       { columnId: 2, name: "Maintenance Date", type: "date" },
@@ -269,10 +248,7 @@ export const sampleData: TaskRow[] = [
     template: adminTemplates[2],
     taskLineChecked: false,
     timeSensitiveDate: null,
-    timeSensitiveColors: {
-      warning: { days: 6, color: "#FFD93D" },
-      danger: { days: 3, color: "#FF6B6B" },
-    },
+    
     otherColumns: [
       { columnId: 1, name: "Customer Name", type: "text" },
       { columnId: 2, name: "Maintenance Date", type: "date" },
@@ -300,10 +276,7 @@ export const sampleData: TaskRow[] = [
     template: adminTemplates[1],
     taskLineChecked: false,
     timeSensitiveDate: "2025-11-11",
-    timeSensitiveColors: {
-      warning: { days: 6, color: "#FFD93D" },
-      danger: { days: 3, color: "#FF6B6B" },
-    },
+     
     otherColumns: [
       { columnId: 1, name: "Customer Name", type: "text" },
       { columnId: 2, name: "Maintenance Date", type: "date" },
@@ -329,8 +302,7 @@ export const sampleData: TaskRow[] = [
 
 
 
-
-export const fixedColumns: FixedColumnKey[] = ["category", "vehicle", "date1"];
+ 
 
 export const dateColumns = ["date1", "date2", "timeSensitiveDate"];
 

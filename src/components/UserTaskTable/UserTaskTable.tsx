@@ -11,7 +11,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDetails, FinalColumnKey, ListStep, NotesPopupState, TaskRow } from "@/global/types";
 import { sampleData as initialData } from "@/global/constant";
-import { fixedColumns, finalColumns } from "@/global/constant";
+import {  finalColumns } from "@/global/constant";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { toast } from "sonner";
 import AddTaskLine from "./AddTaskLine";
@@ -40,22 +40,60 @@ import { Input } from "../ui/input";
 import { convertSegmentPathToStaticExportFilename } from "next/dist/shared/lib/segment-cache/segment-value-encoding";
 import { UserTaskHeaderProps } from "@/global/componentTypes";
 import { convertAdminTemplateToTaskData } from "@/utils/convertIntoUserTasks";
+import { ConfirmModal } from "./ConfirmModal";
+import { set } from "zod";
+ export async function clearAllBrowserStorage() {
+  try {
+    // Clear localStorage
+    localStorage.clear();
 
+    // Clear sessionStorage
+    sessionStorage.clear();
+
+    // Clear Cache Storage (service worker caches)
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map((name) => caches.delete(name)));
+    }
+
+    console.log("All browser storage cleared successfully");
+    return true;
+  } catch (error) {
+    console.error("Failed to clear browser storage:", error);
+    return false;
+  }
+}
 
 
 
 const UserTaskTable = ({ adminTemplate }: UserTaskHeaderProps) => {
+ const handleClearCache = async () => {
+  const success = await clearAllBrowserStorage();
+  if (success) {
+     const fresh = [convertAdminTemplateToTaskData(adminTemplate)];
+
+    setData(fresh);
+    setLastSavedData(JSON.parse(JSON.stringify(fresh)));
+    toast.success("All cache/storage cleared!");
+  } else {
+    toast.error("Failed to clear storage.");
+  }
+};
+
+
   const saveToLocalStorage = () => {
-  try {
+  try { 
+
     const cloned = JSON.parse(JSON.stringify(data)); // DEEP CLONE
 
-    localStorage.setItem("user-task-data", JSON.stringify(cloned));
+    localStorage.setItem(`user-task-data-${adminTemplate.id}`, JSON.stringify(cloned));
     setLastSavedData(cloned); // store clean snapshot
     toast.success("Changes saved!");
   } catch (err) {
     toast.error("Failed to save data");
   }
 };
+  // const [data, setData] = useState([convertAdminTemplateToTaskData(adminTemplate)]);
   const [data, setData] = useState([convertAdminTemplateToTaskData(adminTemplate)]);
 const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
  
@@ -172,47 +210,28 @@ const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
     // =========================================
     // ✅ IF UNCHECKING — show confirmation
     // =========================================
-    if (step.completed) {
-      toast.custom((t) => (
-        <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[300px]">
-          <p className="text-gray-900 text-xl mb-3">Are you sure?</p>
-          <p className="text-gray-700 text-sm mb-3">
-            You want to Uncheck the following column?
-          </p>
+   if (step.completed) {
+  setData(prev => {
+    const updated = [...prev];
 
-          <div className="flex justify-end">
-            <Button size="sm" onClick={() => toast.dismiss(t)} variant="outline">
-              Cancel
-            </Button>
+    // reset all markedNextRed to false on uncheck
+    const resetSteps = updated[rowIndex].steps.map(s => ({
+      ...s,
+      markedNextRed: false
+    }));
 
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                setData(prev => {
-                  const updated = [...prev];
-                  const newSteps = updated[rowIndex].steps.map(s =>
-                    s.name === stepName ? { ...s, completed: false } : s
-                  );
+    // now uncheck the clicked step
+    const newSteps = resetSteps.map(s =>
+      s.name === stepName ? { ...s, completed: false } : s
+    );
 
-                  const clickedIndex = updated[rowIndex].steps.findIndex(
-                    s => s.name === stepName
-                  );
+    updated[rowIndex].steps = newSteps;
+    return updated;
+  });
 
-                  updated[rowIndex].steps = applyMarkedNextRed(newSteps, clickedIndex);
+  return;
+}
 
-                  return updated;
-                });
-                toast.dismiss(t);
-              }}
-            >
-              Yes
-            </Button>
-          </div>
-        </div>
-      ));
-      return;
-    }
 
     // =========================================
     // ✅ Trigger: completed
@@ -401,264 +420,17 @@ const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
       return;
     }
   };
-
-  // const handleCheckbox = (
-  //   rowIndex: number,
-  //   stepName: string,
-  //   value: boolean | "indeterminate"
-  // ) => {
-  //   const step = data[rowIndex].steps.find((s) => s.name === stepName);
-  //   if (!step) return;
-
-  //   // ✅ Step already completed
-  //   if (step.completed) {
-  //     toast.custom((t) => (
-  //       <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[300px]">
-  //         <p className="text-gray-900 text-xl mb-3">
-  //           Are you sure?
-  //         </p>
-  //         <p className="text-gray-700 text-sm mb-3">
-  //           You want to Uncheck the folowing column?
-  //         </p>
-  //         <div className="flex justify-end">
-  //           <Button size="sm" onClick={() => toast.dismiss(t)} variant="outline">
-  //             Cancel
-  //           </Button>
-  //           <Button size="sm" onClick={() => {
-
-  //             setData(prev => {
-  //               const updated = [...prev];
-  //               updated[rowIndex].steps = updated[rowIndex].steps.map(s =>
-  //                 s.name === stepName ? { ...s, completed: false } : s
-  //               );
-  //               return updated;
-  //             });
-  //             toast.dismiss(t)
-  //           }} variant="outline">
-  //             Yes
-  //           </Button>
-  //         </div>
-  //       </div>
-  //     ));
-  //     return;
-  //   }
-
-  //   // ✅ Trigger type: completed
-  //   if (step.triggerType === "completed") {
-  //     setData(prev => {
-  //       const updated = [...prev];
-  //       updated[rowIndex].steps = updated[rowIndex].steps.map(s =>
-  //         s.name === stepName ? { ...s, completed: true } : s
-  //       );
-  //       return updated;
-  //     });
-  //     return;
-  //   }
-
-  //   // ✅ Trigger type: popup
-  //   if (step.triggerType === "popup") {
-  //     toast.custom((t) => (
-  //       <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[320px]">
-  //         <p className="text-gray-800 text-sm mb-3">
-  //           {step.popup?.description || "Please confirm this action."}
-  //         </p>
-  //         <div className="flex justify-end space-x-2">
-  //           <Button size="sm" variant="outline" onClick={() => toast.dismiss(t)}>
-  //             Cancel
-  //           </Button>
-  //           <Button
-  //             size="sm"
-  //             onClick={() => {
-  //               setData(prev => {
-  //                 const updated = [...prev];
-  //                 updated[rowIndex].steps = updated[rowIndex].steps.map(s =>
-  //                   s.name === stepName ? { ...s, completed: true } : s
-  //                 );
-  //                 return updated;
-  //               });
-  //               toast.dismiss(t);
-  //               toast.success("Step marked as completed!");
-  //             }}
-  //           >
-  //             OK
-  //           </Button>
-  //         </div>
-  //       </div>
-  //     ),
-  //       {
-  //         position: "top-center", // 👈 only this toast appears at the top center
-  //         duration: 6000, // optional: auto close after 6s
-  //         dismissible: true, // allow click to dismiss
-  //       });
-  //     return;
-  //   }
-
-  //   // ✅ Trigger type: relation
-  //   if (step.triggerType === "relation") {
-  //     const initial = structuredClone(step?.linkedStep?.futureColumnThings || []);
-
-  //     toast.custom((t) => {
-  //       function FutureColumnToast() {
-  //         const [state, setState] = React.useState(initial);
-
-  //         return (
-  //           <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[330px]">
-  //             <p className="text-gray-800 text-sm mb-3">
-  //               You just finished this column. Mark what is needed for the next column:
-  //             </p>
-
-  //             <div className="space-y-2 max-h-[140px] overflow-y-auto mb-3 pr-1">
-  //               {state.map((fc, i) => (
-  //                 <div
-  //                   key={i}
-  //                   className="flex items-center justify-between border rounded px-2 py-2"
-  //                 >
-  //                   <span className="text-xs text-gray-700">{fc.description}</span>
-  //                   <Switch
-  //                     checked={fc.needed}
-  //                     onCheckedChange={(val) => {
-  //                       const copy = [...state];
-  //                       copy[i] = { ...copy[i], needed: val };
-  //                       setState(copy);
-  //                     }}
-  //                   />
-  //                 </div>
-  //               ))}
-  //             </div>
-
-  //             <div className="flex justify-end space-x-2">
-  //               <Button
-  //                 size="sm"
-  //                 variant="outline"
-  //                 onClick={() => toast.dismiss(t)}
-  //               >
-  //                 Cancel
-  //               </Button>
-
-  //               <Button
-  //                 size="sm"
-  //                 onClick={() => {
-  //                   setData(prev =>
-  //                     prev.map((row, rIndex) => {
-  //                       if (rIndex !== rowIndex) return row;
-
-  //                       return {
-  //                         ...row,
-  //                         steps: row.steps.map(s => {
-  //                           if (s.name === stepName) {
-  //                             return {
-  //                               ...s,
-  //                               completed: true,
-  //                               linkedStep: {
-  //                                 ...s.linkedStep!,
-  //                                 futureColumnThings: state,
-  //                               },
-  //                             };
-  //                           }
-
-  //                           if (step?.linkedStep && s.id === step.linkedStep.id) {
-  //                             return { ...s, markedNext: true };
-  //                           }
-
-  //                           return s;
-  //                         }),
-  //                       };
-  //                     })
-  //                   );
-
-  //                   toast.dismiss(t);
-  //                 }}
-  //               >
-  //                 OK
-  //               </Button>
-  //             </div>
-  //           </div>
-  //         );
-  //       }
-
-  //       return <FutureColumnToast />;
-  //     }
-  //       ,
-  //       {
-  //         position: "top-center", // 👈 only this toast appears at the top center
-  //         duration: 6000, // optional: auto close after 6s
-  //         dismissible: true, // allow click to dismiss
-  //       });
-  //     return;
-  //   }
-  // };
-
-
+  const [modalOpen, setModalOpen] = useState(false);
+    const [selectedRow, setSelectedRow] = useState<number | null>(null);
+    const [selectedCol, setSelectedCol] = useState<FinalColumnKey | null>(null);
   const handleFinalCheckbox = (
     rowIndex: number,
     col: FinalColumnKey,
     value: boolean | "indeterminate"
   ) => {
-    toast.custom((t) =>
-
-    (
-      <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[330px]">
-        <p className="text-gray-800 text-sm mb-3">
-          You want this task line to be mark as completed? It will delete this taskline, you want to continue?
-        </p>
-
-
-
-        <div className="flex justify-end space-x-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => toast.dismiss(t)}
-          >
-            Cancel
-          </Button>
-
-          <Button
-            size="sm"
-            onClick={() => {
-              setData((prev) => {
-                const updated = [...prev];
-
-                const wasChecked = updated[rowIndex][col];
-                const checked = value === true;
-
-                // ✅ Update this row
-                updated[rowIndex] = {
-                  ...updated[rowIndex],
-                  [col]: checked,
-                  steps: updated[rowIndex].steps.map((step) => ({
-                    ...step,
-                    completed: checked,
-                  })),
-                };
-
-                if (!wasChecked && checked) {
-                  toast.success("Task Marked as Completed ✅");
-
-                  // ✅ DELETE THIS ROW
-                  const filtered = updated.filter((_, i) => i !== rowIndex);
-                  return filtered;
-                }
-
-                return updated;
-              });
-
-              toast.dismiss(t);
-            }}
-          >
-            Yes
-          </Button>
-        </div>
-      </div>
-    )
-
-      ,
-      {
-        position: "top-center", // 👈 only this toast appears at the top center
-        duration: 6000, // optional: auto close after 6s
-        dismissible: true, // allow click to dismiss
-      });
-
+    setSelectedRow(rowIndex);
+    setSelectedCol(col);
+    setModalOpen(true);
   };
 
   const handleTaskLineCheckbox = (rowIndex: number) => {
@@ -677,12 +449,18 @@ const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
     });
   };
 React.useEffect(() => {
-  const saved = localStorage.getItem("user-task-data");
+    const saved = localStorage.getItem(`user-task-data-${adminTemplate.id}`);
   if (saved) {
     const parsed = JSON.parse(saved);
     setData(parsed);
-    setLastSavedData(JSON.parse(JSON.stringify(parsed))); // deep clone snapshot
+    setLastSavedData(JSON.parse(JSON.stringify(parsed)));
+    return;
   }
+
+  // Otherwise → generate fresh data for this template
+  const fresh = [convertAdminTemplateToTaskData(adminTemplate)];
+  setData(fresh);
+  setLastSavedData(JSON.parse(JSON.stringify(fresh)));
 }, []);
 
 React.useEffect(() => {
@@ -695,8 +473,11 @@ React.useEffect(() => {
     ">
       <AddTaskLine adminTemplate={adminTemplate} data={data} setData={setData} />
       <div className="w-full flex flex-row items-center justify-end">
+        <Button variant="customNormal1" onClick={handleClearCache}>
+   Clear Table
+  </Button>
 {hasChanges && (
-  <Button variant="customNormal" onClick={saveToLocalStorage}>
+  <Button className="ml-2" variant="customNormal2" onClick={saveToLocalStorage}>
     Save Changes
   </Button>
 )}
@@ -709,7 +490,13 @@ React.useEffect(() => {
         </CardHeader>
 
         <CardContent>
-          <div className="min-w-full overflow-auto max-h-[55vh]">
+         {data.length === 0 ?<div className="p-4 rounded-lg w-full flex flex-row items-center justify-center border border-gray-400">
+          <p className="text-center text-gray-700">
+            No Task Lines to show... (Add new Task Line from above)
+          </p>
+         </div>:
+
+ <div className="min-w-full overflow-auto max-h-[55vh]">
             <table className={`  table-auto border-collapse border w-full ${roboto.className}`}>
               <thead className="bg-gray-100 sticky top-[-10] z-[50] h-[80px]">
 
@@ -718,25 +505,19 @@ React.useEffect(() => {
                   <th className="px-1 h-[20px]  text-center  text-[11px] sticky left-[-2]  bg-gray-100  pt-8 ">
 
                   </th>
-                  <th
+                  {/* <th
                     className="px-4 h-[20px] text-center text-[11px] pt-8 sticky left-[15px] z-[60] bg-gray-100"
                   >
                     T/L
-                  </th>
+                  </th> */}
 
                   {/* Dynamic Other Columns */}
-                  {Array.from(
-                    new Set(
-                      data.flatMap((d: any) =>
-                        d.otherColumns.map((col: any) => col.name)
-                      )
-                    )
-                  ).map((name) => (
+                  {adminTemplate.steps.filter((s)=>{return s.type!=='check'}).map((step) => (
                     <th
-                      key={name}
+                      key={step.id}
                       className="   min-w-[70px]  text-[11px] px-4 text-center pt-8  "
                     >
-                      {name.toUpperCase()}
+                      {step.name.toUpperCase()}
                     </th>
                   ))}
 
@@ -746,15 +527,15 @@ React.useEffect(() => {
                   </th>
 
                   {/* Non-TimeSensitive Step Columns */}
-                  {data[0].steps.map((stepName, index) => (
+                  {adminTemplate.steps.filter((s)=>{return s.type=='check'}).map((step, index) => (
                     <th
-                      key={stepName.id}
+                      key={step.id}
                       className="cursor-pointer px-4 h-[50px] min-w-[120px] text-center text-[11px]"
                     >
                       <div className="w-full flex flex-col items-center">
-                        {stepName.columnDetails ? <button
+                        {step.columnDetails ? <button
                           className="my-2 cursor-pointer"
-                          onClick={() => HeaderDetails(stepName.columnDetails as ColumnDetails, stepName.name)}
+                          onClick={() => HeaderDetails(step.columnDetails as ColumnDetails, step.name)}
 
                         >
 
@@ -779,7 +560,8 @@ React.useEffect(() => {
                 </tr>
               </thead>
 
-              <tbody>
+             {data.length > 0  &&
+                    <tbody>
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
@@ -794,7 +576,7 @@ React.useEffect(() => {
                     {data.map((row: TaskRow, idx: number) => (
                       <DraggableRow key={row.id} id={row.id} className="border border-2 border-b-stone-200  ">
 
-                        <td
+                        {/* <td
                           className={`text-center w-[80px] ${row.taskLineChecked ? "bg-red-600" : "bg-stone-200"} sticky left-[16px] z-[49]`}
                         >
                           <Checkbox
@@ -802,7 +584,7 @@ React.useEffect(() => {
                             checked={row.statusTL}
                             onCheckedChange={(v) => handleTaskLineCheckbox(idx)}
                           />
-                        </td>
+                        </td> */}
 
                         {/* Other Columns */}
                         {Array.from(
@@ -926,7 +708,7 @@ React.useEffect(() => {
                                     (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
                                   );
 
-                                  const { warning, danger } = row.timeSensitiveColors || {};
+                                  const { warning, danger } = row.otherColumns[0]?.timeSensitiveColors || {};
                                   if (danger && diffDays <= danger.days) bgColor = danger.color;
                                   else if (warning && diffDays <= warning.days) bgColor = warning.color;
                                 }
@@ -1036,7 +818,7 @@ React.useEffect(() => {
                                 <Tooltip>
                                   {/* ✅ MOVE TooltipTrigger TO THIS DIV */}
                                   <TooltipTrigger asChild>
-                                    <div className={`relative flex flex-col items-center w-full h-full 
+                                    <div className={`relative flex flex-col justify-center items-center w-full min-h-[40px]
         
          `}
                                     >
@@ -1059,7 +841,7 @@ React.useEffect(() => {
                                         }}
 
 
-                                        className={`relative flex flex-col items-center w-8/12 h-full ${row.taskLineChecked ? "bg-red-600" : step ? step.completed ? "bg-lime-500"
+                                        className={`relative flex flex-col items-center justify-center w-8/12 min-h-[40px] ${row.taskLineChecked ? "bg-red-600" : step ? step.completed ? "bg-lime-500"
                                           : step.markedNext ? "bg-yellow-300"
                                             : step.markedNextRed ? "bg-red-200" : "bg-gray-200" : ""}`}>
                                         {/* Notes icon */}
@@ -1133,9 +915,11 @@ React.useEffect(() => {
                     ))}
                   </SortableContext>
                 </DndContext>
-              </tbody>
+              </tbody>}
             </table>
           </div>
+
+         }
 
 
 
@@ -1152,7 +936,22 @@ React.useEffect(() => {
         onSave={saveNotes}
         onDelete={deleteNotes}
       />
-
+  <ConfirmModal
+        isOpen={modalOpen}
+        message="You want this task line to be marked as completed? It will delete this taskline, do you want to continue?"
+        onCancel={()=>setModalOpen(false) }
+        onConfirm={() => {
+    if (selectedRow !== null) {
+     setData((prev) => { const updated = [...prev]; const wasChecked = updated[selectedRow][selectedCol as FinalColumnKey]; 
+      
+      updated[selectedRow] = { ...updated[selectedRow], [selectedCol as FinalColumnKey]: true, steps: updated[selectedRow].steps.map((step) => ({ ...step, completed: true, })), }; if (!wasChecked && true) { toast.success("Task Marked as Completed ✅"); 
+        // ✅ DELETE THIS ROW 
+        const filtered = updated.filter((_, i) => i !== selectedRow); return filtered; } return updated; });
+      console.log("Confirmed row:", selectedRow);
+    }
+    setModalOpen(false);
+  }}
+      />
     </div>
   );
 }

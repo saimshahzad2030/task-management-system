@@ -9,18 +9,18 @@ export default async function UserTasksPage({
   params: Promise<{ templateId: string }>
 }) {
     const { templateId } = await params;
-  const index = Number(templateId);
-
-  const template = adminTemplates[index];
+ 
+  const template = adminTemplates.find(t => t.id == templateId);
 
   // ❌ If not found → show default Next.js 404 page
   if (!template) {
     notFound();
   }
+  console.log(template.id)
   return (
     <div className='flex flex-col items-start w-full p-8'>
-      <UserTaskHeader adminTemplate={adminTemplates[index]}/>
-      <UserTaskTable adminTemplate={adminTemplates[index]}/>
+      <UserTaskHeader adminTemplate={template}/>
+      <UserTaskTable adminTemplate={template}/>
     </div>
   )
 } 

@@ -21,10 +21,7 @@ export const convertAdminTemplateToTaskData = (template: AdminTemplate): TaskRow
     updatedAt: new Date(),
 
     timeSensitiveDate: null,
-    timeSensitiveColors: template.timeSensitiveColors ?? {
-      warning: { days: 3, color: "#FACC15" },
-      danger: { days: 1, color: "#EF4444" },
-    },
+     
 
     otherColumns: dynamicOtherColumns,
 

@@ -24,6 +24,8 @@ export default function AddTaskLine({  adminTemplate,data, setData }: AddTaskLin
         name: step.name,
         type: (step.type ?? "text") as "text" | "date" | "check",
         value: "",
+          timeSensitiveColors:  step.isTimeSensitive ?  step.timeSensitiveColors:undefined,
+        isTimeSensitive: step.isTimeSensitive || false,
         columnId: idx + 1,
       }));
 
@@ -48,10 +50,7 @@ export default function AddTaskLine({  adminTemplate,data, setData }: AddTaskLin
 
       statusTL: false,
       completed: false,
-      timeSensitiveColors: adminTemplate.timeSensitiveColors ?? {
-        warning: { days: 6, color: "#FFD93D" },
-        danger: { days: 3, color: "#FF6B6B" },
-      },
+      
     };
 
     setData((prev) => [...prev, newTask]);

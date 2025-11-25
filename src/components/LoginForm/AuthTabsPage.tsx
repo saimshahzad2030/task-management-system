@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { login, signup } from '@/services/authentication.services';
 
 // --- Validation Schemas ---
 const signupSchema = z
@@ -48,9 +49,15 @@ export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) =
   });
 
   const submit = async (data: SignupFormValues) => {
+    try{
     if (onSubmit) return onSubmit(data);
-    // Example placeholder: replace with your API call
-   // reset() if you want to clear the form on success
+    const response = await signup({ email: data.email, username: data.username, password: data.password, });
+    if (response.status === 201 || response.status === 200) { toast.success("Signup successful!"); reset(); 
+      // Clear the form router.push("/login"); 
+      // // Redirect to login page after success 
+      } else { toast.error(`Signup failed: ${response.data}`); }
+      } catch (err) { toast.error("Something went wrong. Please try again."); }
+     
   };
 
   return (
@@ -109,18 +116,15 @@ const router = useRouter()
     if (onSubmit) return onSubmit(data);
     const loadingToast = toast.loading("Checking credentials...");
 
-  try {
-    // Fake async check — replace with real API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    if (data.emailOrUsername === "user@tms.com" && data.password === "tms-123") {
-      toast.dismiss(loadingToast); // remove loading
+try{
+    const response = await login({   username: data.emailOrUsername, password: data.password, });
+    if (response.status === 201 || response.status === 200) {  toast.dismiss(loadingToast); // remove loading
       toast.success("Login Successful");
-      router.push("/user-tasks/1");
-    } else {
-      toast.dismiss(loadingToast);
-      toast.error("Wrong Credentials! Please try again.");
-    }
+      router.push("/user-tasks/1");  
+       
+      } else {  toast.dismiss(loadingToast);
+      toast.error("Wrong Credentials! Please try again."); }
+       
 
   } catch (err) {
     toast.dismiss(loadingToast);

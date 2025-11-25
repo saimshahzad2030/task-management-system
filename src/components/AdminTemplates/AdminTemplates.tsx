@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 
-import { AdminTemplate, Categories,   ColumnDetails,   Step, TaskRow } from "@/global/types";
-import { adminTemplates as aT } from "@/global/constant"; 
+import { AdminTemplate, Categories, ColumnDetails, Step, TaskRow } from "@/global/types";
+import { adminTemplates as aT } from "@/global/constant";
 import ColumnHeaderTable from "./ColumnHeaderTable";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Switch } from "../ui/switch";
+import { config } from "../../../config/config";
 
 const showRequiredToast = (title: string, desc: string) => {
   toast.custom((t) => (
@@ -32,44 +33,44 @@ const showRequiredToast = (title: string, desc: string) => {
 
 export default function AdminTemplates() {
   const resetForm = () => {
-  setCategories([]);
-  setColor("#000000");
-  setDescription("");
-  setWarningColor("#FFD93D");
-  setDangerColor("#FF6B6B");
-  setSteps([
-    {
-      id: 1,
-      name: "",
-      completed: false,
-        columnDetailsChecked:false,
+    setCategories([]);
+    setColor("#000000");
+    setDescription("");
+    setWarningColor("#FFD93D");
+    setDangerColor("#FF6B6B");
+    setSteps([
+      {
+        id: 1,
+        name: "",
+        completed: false,
+        columnDetailsChecked: false,
 
-      type: "check",
-      trigger: "completed", 
-      info: "",
-      popup: { description: "" },
-      columnDetails: [],
-      linkedStep: null,
-    },
-  ]);
+        type: "check",
+        trigger: "completed",
+        info: "",
+        popup: { description: "" },
+        columnDetails: [],
+        linkedStep: null,
+      },
+    ]);
 
-  setEditingTemplate(null); // <— EXIT EDIT MODE
-  setShowForm(false);
-};
+    setEditingTemplate(null); // <— EXIT EDIT MODE
+    setShowForm(false);
+  };
 
-  
-  
+
+
   const [editingTemplate, setEditingTemplate] = useState<AdminTemplate | null>(null);
-  const [columnDetails,setColumnDetails]=useState<ColumnDetails>([])
+  const [columnDetails, setColumnDetails] = useState<ColumnDetails>([])
   const [adminTemplates, setAdminTemplates] = React.useState<AdminTemplate[] | []>(aT)
   const [showForm, setShowForm] = useState(false);
   const [edit, setEdit] = useState(false);
 
   // new template state
-  const [categories, setCategories] = useState<Categories[]>([]);
+  const [categories, setCategories] = useState<Categories[]>([{ color: "#000000", name: "", id: 1 }]);
   const [warningColor, setWarningColor] = useState("#FFD93D"); // 6 days
   const [templateName, setTemplateName] = useState(""); // 6 days
-const [dangerColor, setDangerColor] = useState("#FF6B6B");
+  const [dangerColor, setDangerColor] = useState("#FF6B6B");
   const [color, setColor] = useState("#000000");
   const [description, setDescription] = useState("");
   const [modalType, setModalType] = useState<"view" | "edit" | null>(null);
@@ -85,39 +86,39 @@ const [dangerColor, setDangerColor] = useState("#FF6B6B");
     setSelectedTemplate(found ?? null);
     setModalType("edit");
   };
-  
-const handleEditTemplate = (tmpl: AdminTemplate) => {
-  setEditingTemplate(tmpl);
 
-  // Pre-fill form fields
-  setCategories(tmpl.categories); 
-  setDescription(tmpl.description);
-  setWarningColor(tmpl?.timeSensitiveColors?.warning.color || 'yellow');
-  setDangerColor(tmpl?.timeSensitiveColors?.danger.color || 'red');
-  setSteps(tmpl.steps);
-  
-  setShowForm(true);
-};
+  const handleEditTemplate = (tmpl: AdminTemplate) => {
+    setEditingTemplate(tmpl);
+
+    // Pre-fill form fields
+    setCategories(tmpl.categories);
+    setDescription(tmpl.description);
+
+    setSteps(tmpl.steps);
+
+    setShowForm(true);
+  };
 
   const onDelete = (id: string) => {
-toast.custom((t) => (
-    <div className="p-4 border border-gray-200 rounded-lg shadow-md w-[300px]  ">
-      <p className="text-gray-900 text-md ">Are you sure?</p>
+    toast.custom((t) => (
+      <div className="p-4 border border-gray-200 rounded-lg shadow-md w-[300px]  ">
+        <p className="text-gray-900 text-md ">Are you sure?</p>
 
-      <p className="text-gray-700 text-xs mb-2">you want to delete this template? This action can't be undone</p>
+        <p className="text-gray-700 text-xs mb-2">you want to delete this template? This action can't be undone</p>
 
-      <div className="flex justify-end">
-        <Button className="ml-2" size="sm" onClick={() => {setAdminTemplates(prev => prev.filter(t => t.id !== id))
-          toast.dismiss(t)
-        }} variant="outline">
-          Yes
-        </Button>
-        <Button className="ml-2" size="sm" onClick={() => toast.dismiss(t)} variant="outline">
-          Close
-        </Button>
+        <div className="flex justify-end">
+          <Button className="ml-2" size="sm" onClick={() => {
+            setAdminTemplates(prev => prev.filter(t => t.id !== id))
+            toast.dismiss(t)
+          }} variant="outline">
+            Yes
+          </Button>
+          <Button className="ml-2" size="sm" onClick={() => toast.dismiss(t)} variant="outline">
+            Close
+          </Button>
+        </div>
       </div>
-    </div>
-  )); 
+    ));
   };
   // steps array
   const [data, setData] = React.useState<TaskRow | null>(null)
@@ -136,40 +137,44 @@ toast.custom((t) => (
         type: "check",
         trigger: "completed",
         timeSensitive: false,
-        columnDetailsChecked:false,
+        columnDetailsChecked: false,
         info: "",
+        timeSensitiveColors: {
+          warning: { days: 6, color: "#FFD93D" },
+          danger: { days: 3, color: "#FF6B6B" },
+        },
         popup: { description: null },
         columnDetails: [],
         linkedStep: null
       },
     ]);
   };
- const addCategory = () => {
+  const addCategory = () => {
     setCategories(prev => [
       ...prev,
       {
         id: prev.length + 1,
-        color:"#000000",
+        color: "#000000",
         name: "",
-        
+
       },
     ]);
   };
- const updateCategory = <K extends keyof Categories>(
-  index: number,
-  field: K,
-  value: Categories[K]
-) => {
-  setCategories(prev => {
-    const copy = [...prev];
-    copy[index][field] = value;
-    return copy;
-  });
-};
+  const updateCategory = <K extends keyof Categories>(
+    index: number,
+    field: K,
+    value: Categories[K]
+  ) => {
+    setCategories(prev => {
+      const copy = [...prev];
+      copy[index][field] = value;
+      return copy;
+    });
+  };
 
   // Update step field dynamically
   const updateStep = (index: number, field: string, value: any) => {
- 
+
     setSteps(prev => {
       const copy = [...prev];
       //@ts-ignore
@@ -206,140 +211,111 @@ toast.custom((t) => (
   const removeStep = (index: number) => {
     setSteps(prev => prev.filter((_, i) => i !== index));
   };
-   const removeCategory = (index: number) => {
+  const removeCategory = (index: number) => {
+    if (categories
+      .length <= 1) return;
     setCategories(prev => prev.filter((_, i) => i !== index));
   };
 
   const saveTemplate = () => {
-      if (!categories) {
-    showRequiredToast(
-      "Category Required",
-      "Category name is required for creating a template."
-    );
-    return;
-  }
+    if (!categories) {
+      showRequiredToast(
+        "Category Required",
+        "Category name is required for creating a template."
+      );
+      return;
+    }
 
-  if (!description.trim()) {
-    showRequiredToast(
-      "Description Required",
-      "Please enter a template description."
-    );
-    return;
-  }
+    if (!description.trim()) {
+      showRequiredToast(
+        "Description Required",
+        "Please enter a template description."
+      );
+      return;
+    }
 
-  if (!color) {
-    showRequiredToast(
-      "Color Required",
-      "Please select a color for the template."
-    );
-    return;
-  }
+    if (!color) {
+      showRequiredToast(
+        "Color Required",
+        "Please select a color for the template."
+      );
+      return;
+    }
 
-  // Also validate warning/danger colors if needed:
-  if (!warningColor) {
-    showRequiredToast(
-      "Warning Color Required",
-      "Please choose a Warning color."
-    );
-    return;
-  }
+    // Also validate warning/danger colors if needed:
+    if (!warningColor) {
+      showRequiredToast(
+        "Warning Color Required",
+        "Please choose a Warning color."
+      );
+      return;
+    }
 
-  if (!dangerColor) {
-    showRequiredToast(
-      "Danger Color Required",
-      "Please choose a Danger color."
-    );
-    return;
-  }
+    if (!dangerColor) {
+      showRequiredToast(
+        "Danger Color Required",
+        "Please choose a Danger color."
+      );
+      return;
+    }
 
-  if (editingTemplate) {
-    // ----------------------
-    // UPDATE EXISTING TEMPLATE
-    // ----------------------
-    const updated = {
-      ...editingTemplate,
-      categories,
-      color,
-      description,
-      steps,
-      timeSensitiveColors: {
-        warning: { days: 6, color: warningColor },
-        danger: { days: 3, color: dangerColor }
-      },
-      updatedAt: new Date()
-    };
-    console.log("updated")
-    setAdminTemplates(prev =>
-      prev.map(t => (t.id === editingTemplate.id ? updated : t))
-    );
+    if (editingTemplate) {
+      // ----------------------
+      // UPDATE EXISTING TEMPLATE
+      // ----------------------
+      const updated = {
+        ...editingTemplate,
+        categories,
+        color,
+        description,
+        steps,
+        timeSensitiveColors: {
+          warning: { days: 6, color: warningColor },
+          danger: { days: 3, color: dangerColor }
+        },
+        updatedAt: new Date()
+      };
+      console.log("updated")
+      setAdminTemplates(prev =>
+        prev.map(t => (t.id === editingTemplate.id ? updated : t))
+      );
 
-    toast.success("Template updated!");
-  } else {
-    // ----------------------
-    // CREATE NEW TEMPLATE
-    // ----------------------
-    const newTemplate: AdminTemplate = {
-      id: "tmpl_" + Date.now(),
-      name:templateName,
-      categories, 
-      description,
-      timeSensitiveColors: {
-        warning: { days: 6, color: warningColor },
-        danger: { days: 3, color: dangerColor },
-      },
-      steps,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    console.log(newTemplate,"newTemplate")
-    setAdminTemplates(prev => [...prev, newTemplate]);
-    toast.success("New template created!");
-  }
-  setData(null)
-  // Reset form
-  resetForm(); 
+      toast.success("Template updated!");
+    } else {
+      // ----------------------
+      // CREATE NEW TEMPLATE
+      // ----------------------
+      const newTemplate: AdminTemplate = {
+        id: "tmpl_" + Date.now(),
+        name: templateName,
+        categories,
+        description,
+
+        steps,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      console.log(newTemplate, "newTemplate")
+      setAdminTemplates(prev => [...prev, newTemplate]);
+      toast.success("New template created!");
+    }
+    setData(null)
+    // Reset form
+    resetForm();
   };
 
-  //   const saveTemplate = () => {
-  //     if (!category.trim()) return alert("Category required");
 
-  //     const newTemplate: AdminTemplate = {
-  //       id:  "2",
-  //       category,
-  //       color,
-  //       description,
-  //       timeSensitiveColors: {
-  //         warning: { days: 6, color: "#FFD93D" },
-  //         danger: { days: 3, color: "#FF6B6B" },
-  //       },
-  //       steps,
-  //     };
-   
-  //     setAdminTemplates(prev => [...prev, newTemplate]);
-
-  //     // reset
-  //     setCategory("");
-  //     setColor("#000000");
-  //     setDescription("");
-  //     setSteps([
-  //       {
-  //         id: 1,
-  //         name: "",
-  //         type: "check",
-  //         trigger: "none",
-  //         timeSensitive: false,
-  //         info: "",
-  //       },
-  //     ]);
-
-  //     setShowForm(false);
-  //   };
 
   return (
     <div className="border rounded-lg p-4 bg-white space-y-4 w-full">
       {/* Toggle Form */}
       <Button onClick={() => {
-        setShowForm(!showForm)}}>
+    
+      resetForm();     // ← RESET EVERYTHING when closing
+  
+        setShowForm(!showForm)
+        setTemplateName(``)
+      }}>
         {showForm ? "Close Builder" : "Create New Template"}
       </Button>
 
@@ -350,7 +326,7 @@ toast.custom((t) => (
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-md bg-gray-200 p-4">
               <label className="text-sm font-semibold"> Name</label>
-              <Input className="bg-white border border-gray-400" value={templateName} onChange={e => setTemplateName(e.target.value)} />
+              <Input className="bg-white border border-gray-400" placeholder="Enter Template Name" value={templateName} onChange={e => setTemplateName(e.target.value)} />
             </div>
 
             {/* <div className="rounded-md bg-gray-200 p-4">
@@ -365,80 +341,53 @@ toast.custom((t) => (
               </div>
             </div> */}
             <div className="col-span-1 rounded-md bg-gray-200 p-4 ">
-            <label className="text-sm font-semibold">Description</label>
-            <Textarea className="bg-white border border-gray-400" value={description} onChange={e => setDescription(e.target.value)} />
-          </div>
-            <div className="grid-cols-1 flex flex-col items-start w-full rounded-md bg-gray-200 p-4">
-              <h1 className="text-sm font-semibold">Time Sensitive Date Properties</h1>
-             <div className="flex flex-col items-start w-full mt-4">
-              <div className="flex flex-row items-center  h-[20px]">
-              <label className="text-xs font-semibold mr-2">6 Days before deadline</label>
-              <div className="transform scale-50 origin-left">
-                <Input
-                  type="color"
-               value={warningColor}
-        onChange={e => setWarningColor(e.target.value)}
-                  className="w-8 h-8 p-0 border-none rounded-xl"
-                />
-              </div>
+              <label className="text-sm font-semibold">Description</label>
+              <Textarea className="bg-white border border-gray-400 "  placeholder="Enter Template Description" value={description} onChange={e => setDescription(e.target.value)} />
             </div>
-             <div className=" flex flex-row items-center h-[20px]">
-                     <label className="text-xs font-semibold mr-2">3 Days before deadline</label>
 
-              <div className="transform scale-50 origin-left">
-                <Input
-                  type="color"
-                   value={dangerColor}
-        onChange={e => setDangerColor(e.target.value)}
-                  className="w-8 h-8 p-0 border-none rounded-xl"
-                />
-              </div>
-            </div>
-              </div>
-              </div>
           </div>
 
-         <h3 className="font-bold text-md mt-2 mb-0">Categories</h3>
-       <div className="w-full grid grid-cols-5 gap-x-4">
-         {categories.map((step, index) => (
-            <div style={{border:`2px solid ${step.color}`}} key={index} className="mt-4 border p-3 rounded-lg bg-gray-100 space-y-2">
-              
-              <div className="flex justify-between">
-                
-                <span className="font-semibold">Category {index + 1}</span>
-                {steps.length > 1 && (
-                  <Button  size="sm" onClick={() => removeStep(index)}>
-                    <X/>
-                  </Button>
-                )}
-              </div>
+          <h3 className="font-bold text-md mt-2 mb-0">Categories</h3>
+          <div className="w-full grid grid-cols-5 gap-x-4">
+            {categories.map((step, index) => (
+              <div style={{ border: `2px solid ${step.color}` }} key={index} className="mt-4 border p-3 rounded-lg bg-gray-100 space-y-2">
 
-              <Input
-                placeholder="Category Name"
-                value={step.name}
-                className="border border-gray-400  bg-white"
-                onChange={e => updateCategory(index, "name", e.target.value)}
-              />
+                <div className="flex justify-between">
 
-               
-            <div className="rounded-md bg-gray-100 flex flex-row items-center"> 
-              <div className="transform scale-75 origin-left ">
+                  <span className="font-semibold">Category {index + 1}</span>
+                  {categories.length > 1 && (
+                    <Button size="sm" onClick={() => removeCategory(index)}>
+                      <X />
+                    </Button>
+                  )}
+                </div>
+
                 <Input
-                  type="color"
-                  value={step.color}
-                 onChange={e => updateCategory(index, "color", e.target.value)}
-
-                  className="w-8 h-8 p-0 border-none rounded-xl cursor-pointer"
+                  placeholder="Category Name"
+                  value={step.name}
+                  className="border border-gray-400  bg-white"
+                  onChange={e => updateCategory(index, "name", e.target.value)}
                 />
-              </div>
-                <label className="text-[9px]  text-gray-500 ">Change Color</label>
-            </div>
 
-              
-            </div>
-          ))}
-       </div>
-   <Button onClick={addCategory} variant="customNormal">
+
+                <div className="rounded-md bg-gray-100 flex flex-row items-center">
+                  <div className="transform scale-75 origin-left ">
+                    <Input
+                      type="color"
+                      value={step.color}
+                      onChange={e => updateCategory(index, "color", e.target.value)}
+
+                      className="w-8 h-8 p-0 border-none rounded-xl cursor-pointer"
+                    />
+                  </div>
+                  <label className="text-[9px]  text-gray-500 ">Change Color</label>
+                </div>
+
+
+              </div>
+            ))}
+          </div>
+          <Button onClick={addCategory} variant="customNormal">
             + Add Category
           </Button>
           {/* Steps Section */}
@@ -449,8 +398,8 @@ toast.custom((t) => (
               <div className="flex justify-between">
                 <span className="font-semibold">Column {index + 1}</span>
                 {steps.length > 1 && (
-                  <Button  size="sm" onClick={() => removeStep(index)}>
-                    <X/>
+                  <Button size="sm" onClick={() => removeStep(index)}>
+                    <X />
                   </Button>
                 )}
               </div>
@@ -462,10 +411,12 @@ toast.custom((t) => (
                 onChange={e => updateStep(index, "name", e.target.value)}
               />
 
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-9 gap-2">
                 {/* Type */}
-                <div>
-                  <label className="text-xs">Type</label>
+                <div className="col-span-2">
+                  <span className="flex flex-col text-xs leading-none gap-[1px] mb-4  ">
+                    <span className="text-sm font-semibold">Type</span>  <span className="font-normal  text-xs">Specify the type of Your Column (text,date or checkbox)</span></span>
+
                   <Select onValueChange={(v) => updateStep(index, "type", v)} defaultValue={step.type}>
                     <SelectTrigger className="bg-white min-w-[120px]  border border-gray-400"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -477,15 +428,16 @@ toast.custom((t) => (
                 </div>
 
                 {/* Trigger */}
-                {step.type == 'check' && <div className="col-span-2">
+                {step.type == 'check' && <div className={`${step.linkedStep?.futureColumnThings ? "col-span-4" : "col-span-3"}`}>
 
-                  <label className="text-xs">Trigger</label>
-                  <Select  onValueChange={(v) => updateStep(index, "trigger", v)} defaultValue={step.trigger}>
+                  <span className="flex flex-col text-xs leading-none gap-[1px] mb-4  ">
+                    <span className="text-sm font-semibold"> Complete Task Trigger</span>  <span className="font-normal  text-xs">Do you want the task to do anything when it is marked completed?</span></span>
+                  <Select onValueChange={(v) => updateStep(index, "trigger", v)} defaultValue={step.trigger}>
                     <SelectTrigger className="min-w-[120px] bg-white border border-gray-400"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="relation">Relation</SelectItem>
+                      <SelectItem value="relation">Sub Tasks</SelectItem>
                       <SelectItem value="popup">Popup</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="completed">None</SelectItem>
                     </SelectContent>
                   </Select>
                   {step.trigger == "popup" && (
@@ -506,146 +458,296 @@ toast.custom((t) => (
 
                   )}
                   {step.trigger === "relation" &&
-                    <>{steps.filter(s => s.type === "check").length > 1 &&
-                    step.type === "check" && (
-                      <div>
-                        <label className="text-xs">Related Step</label>
+                    <>
+                      <label className="text-xs font-semibold text-gray-700 mt-3">
+                        Sub tasks to do before marking that related column
+                      </label>
+                      <div className="    rounded  w-auto">
 
-                        <Select
-                          onValueChange={(v) => updateStep(index, "linkedStep", { id: Number(v) })}
-                          defaultValue={step.linkedStep?.id?.toString()}
+
+                        <div className="space-y-2 mt-2 mb-2 w-full">
+                          {(step.linkedStep?.futureColumnThings || []).map((item, i) => (
+                            <div className="flex flex-col items-start  bg-white w-full px-2 pb-2">
+                              <div className="flex flex-row items-center justify-between w-full ">
+                                <span className="text-xs">Sub Task {i + 1}</span>
+                                <button
+                                  className="text-gray-700 text-sm cursor-pointer  "
+                                  onClick={() => {
+                                    const copy = step.linkedStep?.futureColumnThings
+                                      ? [...step.linkedStep.futureColumnThings]
+                                      : [];
+
+                                    copy.splice(i, 1);
+
+                                    updateStep(index, "linkedStep", {
+                                      ...step.linkedStep,
+                                      futureColumnThings: copy,
+                                    });
+                                  }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                              <div
+                                key={i}
+                                className="flex items-center     w-full "
+                              >
+
+                                <Textarea
+                                  rows={1}
+                                  className=" text-xs border rounded px-2 py-1 w-full"
+                                  placeholder={`Description for Sub Task ${i + 1}`}
+                                  value={item.description}
+                                  onChange={(e) => {
+                                    const copy = step.linkedStep?.futureColumnThings
+                                      ? [...step.linkedStep.futureColumnThings]
+                                      : [];
+
+                                    copy[i] = {
+                                      ...copy[i],
+                                      description: e.target.value,
+                                    };
+
+                                    updateStep(index, "linkedStep", {
+                                      ...step.linkedStep,
+                                      futureColumnThings: copy,
+                                    });
+                                  }}
+                                />
+
+                                {/* Needed Switch */}
+                                <div className="flex flex-col items-start w-auto ml-2">
+                                  <span className="text-xs text-gray-600 ml-2 text-right">Enter Reminder Note to Future Column?</span>
+                                  <div className="flex flex-row items-center justify-end mt-2 w-full">
+                                    <span className={`text-xs ${item.needed ? "text-gray-400" : "text-gray-800"} mx-2`}>No</span>
+
+                                    <Switch
+                                      checked={item.needed}
+                                      onCheckedChange={(val) => {
+                                        const copy = step.linkedStep?.futureColumnThings
+                                          ? [...step.linkedStep.futureColumnThings]
+                                          : [];
+
+                                        copy[i] = { ...copy[i], needed: val };
+
+                                        updateStep(index, "linkedStep", {
+                                          ...step.linkedStep,
+                                          futureColumnThings: copy,
+                                        });
+                                      }}
+                                    />
+                                    <span className={`text-xs ${item.needed ? "text-gray-800" : "text-gray-400"} mx-2`}>Yes</span>
+                                  </div>
+                                </div>
+
+
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Add New Field */}
+                        <button
+                          className="rounded-lg cursor-pointer  text-xs px-2 py-1 border rounded bg-white"
+                          onClick={() => {
+                            const prev = step.linkedStep?.futureColumnThings || [];
+                            const updated = [
+                              ...prev,
+                              { needed: false, description: "" },
+                            ];
+
+                            updateStep(index, "linkedStep", {
+                              ...step.linkedStep,
+                              futureColumnThings: updated,
+                            });
+                          }}
                         >
-                          <SelectTrigger className="min-w-[100px] bg-white border border-gray-400">
-                            <SelectValue placeholder="Select step" />
-                          </SelectTrigger>
-
-                          <SelectContent>
-                            {steps
-                              .filter((_, i) => i !== index) // cannot link to itself
-                              .map((s, i) => (
-                                <SelectItem key={s.id} value={s.id.toString()}>
-                                  Step {s.id}: {s.name || "Unnamed"}
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
+                          + Add Sub Task
+                        </button>
                       </div>
-                    )}
-                    <label className="text-xs font-semibold text-gray-700 mt-3">
-             Things to do before marking that related column
-            </label>
-                     <div className="    rounded  w-auto">
-            
+                      {steps.filter(s => s.type === "check").length > 1 &&
+                        step.type === "check" && (
+                          <div className="flex flex-row ">
+                            <div className=" ">
+                              <label className="text-xs">Related Step</label>
 
-            <div className="space-y-2 mt-2 mb-2 w-full">
-              {(step.linkedStep?.futureColumnThings || []).map((item, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-2 p-2 bg-white border rounded"
-                >
-                  {/* Description Field */}
-                  <input
-                    type="text"
-                    className="flex-1 text-xs border rounded px-2 py-1"
-                    placeholder="Description"
-                    value={item.description}
-                    onChange={(e) => {
-                      const copy = step.linkedStep?.futureColumnThings
-                        ? [...step.linkedStep.futureColumnThings]
-                        : [];
+                              <Select
+                                onValueChange={(v) => updateStep(index, "linkedStep", { id: Number(v), notes: step.linkedStep?.notes || "", futureColumnThings: step.linkedStep?.futureColumnThings || [] })}
+                                defaultValue={step.linkedStep?.id?.toString()}
+                              >
+                                <SelectTrigger className="min-w-[100px] bg-white border border-gray-400">
+                                  <SelectValue placeholder="Select step" />
+                                </SelectTrigger>
 
-                      copy[i] = {
-                        ...copy[i],
-                        description: e.target.value,
-                      };
+                                <SelectContent>
+                                  {steps
+                                    .filter((_, i) => i !== index) // cannot link to itself
+                                    .map((s, i) => (
+                                      <SelectItem key={s.id} value={s.id.toString()}>
+                                        Step {s.id}: {s.name || "Unnamed"}
+                                      </SelectItem>
+                                    ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="flex flex-col items-start w-full  ml-4">
+                              <label className="text-xs my-1">Notes</label>
 
-                      updateStep(index, "linkedStep", {
-                        ...step.linkedStep,
-                        futureColumnThings: copy,
-                      });
-                    }}
-                  />
+                              <Textarea
 
-                  {/* Needed Switch */}
-                  <span className="text-xs text-gray-600">Needed?</span>
-                  <Switch
-                    checked={item.needed}
-                    onCheckedChange={(val) => {
-                      const copy = step.linkedStep?.futureColumnThings
-                        ? [...step.linkedStep.futureColumnThings]
-                        : [];
-
-                      copy[i] = { ...copy[i], needed: val };
-
-                      updateStep(index, "linkedStep", {
-                        ...step.linkedStep,
-                        futureColumnThings: copy,
-                      });
-                    }}
-                  />
-
-                  {/* Remove Button */}
-                  <button
-                    className="text-gray-700 text-sm cursor-pointer"
-                    onClick={() => {
-                      const copy = step.linkedStep?.futureColumnThings
-                        ? [...step.linkedStep.futureColumnThings]
-                        : [];
-
-                      copy.splice(i, 1);
-
-                      updateStep(index, "linkedStep", {
-                        ...step.linkedStep,
-                        futureColumnThings: copy,
-                      });
-                    }}
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            {/* Add New Field */}
-            <button
-              className="rounded-lg cursor-pointer  text-xs px-2 py-1 border rounded bg-white"
-              onClick={() => {
-                const prev = step.linkedStep?.futureColumnThings || [];
-                const updated = [
-                  ...prev,
-                  { needed: false, description: "" },
-                ];
-
-                updateStep(index, "linkedStep", {
-                  ...step.linkedStep,
-                  futureColumnThings: updated,
-                });
-              }}
-            >
-              + Add Thing
-            </button>
-          </div>
+                                value={step.linkedStep?.notes}
+                                onChange={(val) => {
+                                  updateStep(index, "linkedStep", {
+                                    ...step.linkedStep,
+                                    notes: val.target.value,
+                                  });
+                                }}
+                                placeholder="Notes..." className="bg-white w-full " />
+                            </div>
+                          </div>
+                        )}
                     </>}
                 </div>}
+                {step.type == 'check' &&
+                  <div className="col-span-3">
 
+                    <span className="flex flex-col text-xs leading-none gap-[1px]   ">
+                      <span className="text-sm font-semibold">Check Column</span>
+                      <span className="font-normal  text-xs">Force Column to UNCHECK itself after X days
+                        (example: For a Contact Customer task, you want it to unmark itself every X days)
+                      </span>
+                    </span>
+                    <div className="flex flex-row items-center w-auto  mb-4 mt-2">
+                      <div className={`flex flex-row items-center ${step.unCheckOption?.enabled ? "" : "my-[9px]"}`}>
+                        <span className={`text-xs ${step.unCheckOption?.enabled ? "text-gray-400" : "text-gray-800"} mr-2`}>No</span>
+
+                        <Switch
+                          checked={step.unCheckOption?.enabled || false}
+                          onCheckedChange={(val) => {
+
+                            updateStep(index, "unCheckOption", {
+                              ...step.unCheckOption,
+                              enabled: val,   // ← USE val instead of true
+                            });
+                          }}
+                        />
+                        <span className={`text-xs ${step.unCheckOption?.enabled ? "text-gray-800" : "text-gray-400"} mx-2 mr-4`}>Yes</span>
+
+                        {step.unCheckOption?.enabled &&
+                          <Select onValueChange={(v) => updateStep(index, "unCheckOption"
+                            , {
+                              ...step.unCheckOption,
+                              days: v,
+                            }
+                          )}
+                            defaultValue={"1".toString()}>
+                            <SelectTrigger className="min-w-[120px] bg-white border border-gray-400"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 30 }).map((a, index) => (
+                                <SelectItem value={(index + 1).toString()}>{`${index + 1} Day`}</SelectItem>
+
+                              ))}
+
+                            </SelectContent>
+                          </Select>}
+                      </div>
+                    </div>
+
+
+
+                  </div>}
                 {/* Time Sensitive */}
-                {/* {step.type == 'date' && <div className="flex items-center gap-2 mt-4">
-                  <input
-                    type="checkbox"
-                    checked={step.timeSensitive}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
+                {step.type == 'date' && <div className="flex flex-col items-start w-full col-span-4">
+                  <label className="mt-6 flex items-center gap-2 cursor-pointer ">
+                    <input
+                      type="checkbox"
+                      checked={step.isTimeSensitive || false}
+                      onChange={(e) => {
+                        updateStep(index, "isTimeSensitive", e.target.checked);
+                        // if (!Array.isArray(step.columnDetails)) return
+                        // const updated = step.columnDetails.map((item, i) =>
+                        //   i === catIndex ? { ...item, copyEnabled: e.target.checked } : item
+                        // );
+                        // updateStep(index, "columnDetails", updated);
+                      }
+                      }
+                    />
+                    <span className="text-xs font-bold">Is this date time sensetive? (Example: ECD)</span>
+                  </label>
+                  {step.isTimeSensitive && (
+                    <div className="grid-cols-1 flex flex-col items-start  mt-4 rounded-md bg-gray-200   bg-gray-300 px-4 py-2">
+                      <h1 className="text-sm font-semibold">Time Sensitive Date Properties</h1>
+                      <div className="flex flex-col items-start  mt-1 rounded-md">
 
-                      setSteps(prev =>
-                        prev.map((s, i) => ({
-                          ...s,
-                          timeSensitive: i === index ? checked : false, // only this one is true
-                        }))
-                      );
-                    }}
-                  />
-                  <label className="text-sm">Time Sensitive</label>
-                </div>} */}
+                        {/* Warning */}
+                        <div className="flex flex-row items-center h-[20px] mb-2">
+                          <input
+                            type="number"
+                            className="w-12 h-6 bg-white text-center text-xs border border-gray-400"
+                            value={step?.timeSensitiveColors?.warning.days || 3}
+                            onChange={(e) =>
+                              updateStep(index, "timeSensitiveColors", {
+                                ...step.timeSensitiveColors,
+                                warning: {
+                                  ...step?.timeSensitiveColors?.warning,
+                                  days: Number(e.target.value),
+                                },
+                              })
+                            }
+                          />
+                          <label className="text-xs ml-1 font-semibold mr-2">Days before deadline</label>
+                          <Input
+                            type="color"
+                            value={step?.timeSensitiveColors?.warning?.color}
+                            onChange={(e) =>
+                              updateStep(index, "timeSensitiveColors", {
+                                ...step.timeSensitiveColors,
+                                warning: {
+                                  ...step?.timeSensitiveColors?.warning,
+                                  color: e.target.value,
+                                },
+                              })
+                            }
+                            className="w-8 h-8 p-0 border-none rounded-xl"
+                          />
+                        </div>
+
+                        {/* Danger */}
+                        <div className="flex flex-row items-center h-[20px]">
+                          <input
+                            type="number"
+                            className="w-12 h-6 bg-white text-center text-xs border border-gray-400"
+                            value={step?.timeSensitiveColors?.danger?.days}
+                            onChange={(e) =>
+                              updateStep(index, "timeSensitiveColors", {
+                                ...step.timeSensitiveColors,
+                                danger: {
+                                  ...step?.timeSensitiveColors?.danger,
+                                  days: Number(e.target.value),
+                                },
+                              })
+                            }
+                          />
+                          <label className="text-xs ml-1 font-semibold mr-2">Days before deadline</label>
+                          <Input
+                            type="color"
+                            value={step?.timeSensitiveColors?.danger?.color}
+                            onChange={(e) =>
+                              updateStep(index, "timeSensitiveColors", {
+                                ...step.timeSensitiveColors,
+                                danger: {
+                                  ...step?.timeSensitiveColors?.danger,
+                                  color: e.target.value,
+                                },
+                              })
+                            }
+                            className="w-8 h-8 p-0 border-none rounded-xl"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>}
 
                 {/* COLUMN DETAILS SECTION */}
                 {step.type === "check" && (
@@ -655,78 +757,77 @@ toast.custom((t) => (
                     <label className="flex items-center  mt-2 cursor-pointer ">
                       <span className="text-sm mr-2">Add Column Details</span>
                       <input
-                        type="checkbox" 
+                        type="checkbox"
                         checked={!!step.columnDetailsChecked}
-                       onChange={(e) => {
-  const checked = e.target.checked;
+                        onChange={(e) => {
+                          const checked = e.target.checked;
 
-  // Build columnDetails array only if checked
-  const updatedArray = checked
-    ? categories.map((cat) => ({
-        description: "",
-        copyEnabled: false,
-        category: cat,
-      }))
-    : null; // set to null if unchecked
+                          // Build columnDetails array only if checked
+                          const updatedArray = checked
+                            ? categories.map((cat) => ({
+                              description: "",
+                              copyEnabled: false,
+                              category: cat,
+                            }))
+                            : null; // set to null if unchecked
 
-  // Update the step state
-  updateStep(index, "columnDetailsChecked", checked);
-  updateStep(index, "columnDetails", updatedArray);
-}}
+                          // Update the step state
+                          updateStep(index, "columnDetailsChecked", checked);
+                          updateStep(index, "columnDetails", updatedArray);
+                        }}
 
                       />
                     </label>
 
                     {/* Render the panel if columnDetails exists */}
                     {step.columnDetailsChecked && <div className="grid grid-cols-3 gap-2 w-full  rounded-md">
-                    
-                    <>
-                    <p className="col-span-3 text-gray-500 text-xs">Below are the details of this column with respect to the template Categories.</p>
-                  {Array.isArray(step.columnDetails) &&  step.columnDetails.map((cat, catIndex) => (
-                        <div key={catIndex} className="my-1 flex flex-col items-start w-full border border-gray-500 rounded-md p-2">
-                
-                          <div className="flex flex-row items-center ">
-                            <h3 className="font-semibold text-gray-600 text-sm">{`(Category ${catIndex+1}) `}<span className="text-xs text-gray-500">{cat.category.name}</span></h3>
-                          <div className="ml-2 w-4 h-4 rounded-full" style={{backgroundColor:cat.category.color}}></div>
+
+                      <>
+                        <p className="col-span-3 text-gray-500 text-xs">Below are the details of this column with respect to the template Categories.</p>
+                        {Array.isArray(step.columnDetails) && step.columnDetails.map((cat, catIndex) => (
+                          <div key={catIndex} className="my-1 flex flex-col items-start w-full border border-gray-500 rounded-md p-2">
+
+                            <div className="flex flex-row items-center ">
+                              <h3 className="font-semibold text-gray-600 text-sm">{`(Category ${catIndex + 1}) `}<span className="text-xs text-gray-500">{cat.category.name}</span></h3>
+                              <div className="ml-2 w-4 h-4 rounded-full" style={{ backgroundColor: cat.category.color }}></div>
+                            </div>
+                            <div className=" w-full   mt-2  rounded border      flex flex-row items-center">
+
+                              <Textarea
+                                className="w-full bg-white border border-gray-400  "
+                                placeholder="Column Details"
+                                value={step.columnDetails ? step.columnDetails[catIndex].description : ""}
+                                onChange={(e) => {
+                                  if (!Array.isArray(step.columnDetails)) return
+                                  const updated = step?.columnDetails.map((item, i) =>
+                                    i === catIndex ? { ...item, description: e.target.value } : item
+                                  );
+                                  updateStep(index, "columnDetails", updated);
+                                }}
+                              />
+
+
+
+                              {/* <label className="flex items-center gap-2 cursor-pointer ml-4">
+                                <input
+                                  type="checkbox"
+                                  checked={step.columnDetails ? step.columnDetails[catIndex].copyEnabled : false}
+                                  onChange={(e) => {
+                                    if (!Array.isArray(step.columnDetails)) return
+                                    const updated = step.columnDetails.map((item, i) =>
+                                      i === catIndex ? { ...item, copyEnabled: e.target.checked } : item
+                                    );
+                                    updateStep(index, "columnDetails", updated);
+                                  }
+                                  }
+                                />
+                                <span className="text-xs">Enable Copy Button</span>
+                              </label> */}
+
+                            </div>
                           </div>
-                          <div className=" w-full   mt-2  rounded border      flex flex-row items-center">
-                           
-                          <Textarea
-                        className="w-10/12 bg-white border border-gray-400  "
-                          placeholder="Column Details"
-                          value={step.columnDetails ? step.columnDetails[catIndex].description : ""}
-                          onChange={(e) =>
-                           {
-                            if (!Array.isArray(step.columnDetails)) return
-                            const updated = step?.columnDetails.map((item, i) =>
-    i === catIndex ? { ...item, description: e.target.value } : item
-  ); 
-  updateStep(index, "columnDetails", updated);
-                          }}
-                        />
-                   
-                      
-
-                         <label className="flex items-center gap-2 cursor-pointer ml-4">
-                          <input
-                            type="checkbox"
-                            checked={step.columnDetails ? step.columnDetails[catIndex].copyEnabled : false}
-                            onChange={(e) =>
-                             {
-                              if (!Array.isArray(step.columnDetails)) return
-                              const updated = step.columnDetails.map((item, i) =>
-    i === catIndex ? { ...item, copyEnabled: e.target.checked } : item
-  );
-  updateStep(index, "columnDetails", updated);}
-                            }
-                          />
-                          <span className="text-xs">Enable Copy Button</span>
-                        </label>
-
-                      </div>
-                        </div>
-                      ))}
-                         </>
+                        ))}
+                      </>
                     </div>}
 
                   </div>
@@ -734,12 +835,12 @@ toast.custom((t) => (
 
               </div>
 
-              <Textarea
+              {/* <Textarea
                 placeholder="Description"
                 className="border border-gray-400 bg-white"
                 value={step.description}
                 onChange={e => updateStep(index, "description", e.target.value)}
-              />
+              /> */}
             </div>
           ))}
 
@@ -749,8 +850,8 @@ toast.custom((t) => (
 
           <div className="flex flex-col items-center w-full">
             <Button className="cursor-pointer mt-3" variant="outline" onClick={saveTemplate}>
-  {editingTemplate ? "Update Template" : "Save Template"}
-</Button>
+              {editingTemplate ? "Update Template" : "Save Template"}
+            </Button>
           </div>
         </div>
       )}
@@ -762,7 +863,7 @@ toast.custom((t) => (
         <table className="mt-3 w-full border-collapse text-sm">
           <thead>
             <tr className="bg-gray-100">
-              <th className="border px-3 py-2 text-left">Name</th> 
+              <th className="border px-3 py-2 text-left">Name</th>
               <th className="border px-3 py-2 text-left">Total Steps</th>
               <th className="border px-3 py-2 text-left">Description</th>
               <th className="border px-3 py-2 text-left">Created At</th>
@@ -773,17 +874,17 @@ toast.custom((t) => (
 
           <tbody>
             {adminTemplates.map((t) => {
-               
+
               return (
                 <tr key={t.id}>
                   <td className="border px-3 py-2 font-semibold capitalize"  >
                     {t.name}
                   </td>
 
-                  
+
 
                   <td className="border px-3 py-2">
-                    {t.steps.filter((s)=>{return s.type=='check'}).length}
+                    {t.steps.filter((s) => { return s.type == 'check' }).length}
                   </td>
 
                   <td className="border px-3 py-2">
@@ -806,12 +907,12 @@ toast.custom((t) => (
               </button>
 
              */}
-             <Link className="  underline cursor-pointer " href={`${process.env.FRONTEND_URL}user-tasks/${t.id}`}   target="_blank" 
-  rel="noopener noreferrer" passHref>
-              Open </Link>
- <button
+                    <Link className="  underline cursor-pointer " href={`${config.FRONTEND_URL}user-tasks/${t.id}`} target="_blank"
+                      rel="noopener noreferrer" passHref>
+                      Open </Link>
+                    <button
                       className="text-blue-600 underline cursor-pointer "
-                      onClick={() =>handleEditTemplate(t)}
+                      onClick={() => handleEditTemplate(t)}
                     >
                       Edit
                     </button>
@@ -828,7 +929,7 @@ toast.custom((t) => (
           </tbody>
         </table>
       </div>
-      
+
 
     </div>
   );
