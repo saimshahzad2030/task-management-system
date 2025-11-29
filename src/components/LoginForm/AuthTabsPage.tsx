@@ -13,12 +13,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { login, signup } from '@/services/authentication.services';
-
+import Cookies from 'js-cookie';
 // --- Validation Schemas ---
 const signupSchema = z
   .object({
     email: z.string().min(1, 'Email is required').email('Invalid email'),
     username: z.string().min(3, 'Username must be at least 3 characters'),
+    firstname: z.string().min(3, 'Firstname must be at least 3 characters'),
+    lastname: z.string().min(3, 'Lastname must be at least 3 characters'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string().min(1, 'Confirm password is required'),
   })
@@ -27,7 +29,7 @@ const signupSchema = z
     message: "Passwords don't match",
   });
 
-type SignupFormValues = z.infer<typeof signupSchema>;
+export type SignupFormValues = z.infer<typeof signupSchema>;
 
 const loginSchema = z.object({
   emailOrUsername: z.string().min(1, 'Email or username is required'),
@@ -37,7 +39,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 // --- SignupForm Component ---
-export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) => void }) {
+export function SignupForm({ onSubmit,setTab }: { onSubmit?: (data: SignupFormValues) => void,  setTab?: React.Dispatch<React.SetStateAction<'login' | 'signup'>>; }) {
   const {
     register,
     handleSubmit,
@@ -51,10 +53,11 @@ export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) =
   const submit = async (data: SignupFormValues) => {
     try{
     if (onSubmit) return onSubmit(data);
-    const response = await signup({ email: data.email, username: data.username, password: data.password, });
+    const response = await signup(data);
     if (response.status === 201 || response.status === 200) { toast.success("Signup successful!"); reset(); 
       // Clear the form router.push("/login"); 
       // // Redirect to login page after success 
+      if (setTab) setTab('login');
       } else { toast.error(`Signup failed: ${response.data}`); }
       } catch (err) { toast.error("Something went wrong. Please try again."); }
      
@@ -71,7 +74,16 @@ export function SignupForm({ onSubmit }: { onSubmit?: (data: SignupFormValues) =
             <Input className="mt-2" id="email" placeholder="you@example.com" {...register('email')} />
             {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
           </div>
-
+<div>
+            <Label htmlFor="firstname">First name</Label>
+            <Input className="mt-2" id="firstname" placeholder="your firstname" {...register('firstname')} />
+            {errors.firstname && <p className="text-sm text-red-500">{errors.firstname.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="lastname">Last name</Label>
+            <Input className="mt-2" id="lastname" placeholder="your lastname" {...register('lastname')} />
+            {errors.lastname && <p className="text-sm text-red-500">{errors.lastname.message}</p>}
+          </div>
           <div>
             <Label htmlFor="username">Username</Label>
             <Input className="mt-2" id="username" placeholder="yourusername" {...register('username')} />
@@ -117,13 +129,23 @@ const router = useRouter()
     const loadingToast = toast.loading("Checking credentials...");
 
 try{
-    const response = await login({   username: data.emailOrUsername, password: data.password, });
+    const response = await login({   email: data.emailOrUsername, password: data.password, });
     if (response.status === 201 || response.status === 200) {  toast.dismiss(loadingToast); // remove loading
-      toast.success("Login Successful");
-      router.push("/user-tasks/1");  
+      toast.success(response.message || "Login successful!");
+      Cookies.set("accessToken",response.data.token);
+      if(
+        response.data.isAdmin
+      ){
+        router.push("/admin-templates");  
+
+      }
+      else{
+
+        router.push("/user-tasks/1");  
+      }
        
       } else {  toast.dismiss(loadingToast);
-      toast.error("Wrong Credentials! Please try again."); }
+      toast.error(response.message); }
        
 
   } catch (err) {
@@ -198,7 +220,7 @@ export default function AuthTabsPage() {
                   </TabsContent>
 
                   <TabsContent value="signup">
-                    <SignupForm />
+                    <SignupForm setTab={setTab}/>
                     <div className="text-center mt-4">
                       <p className="text-sm">
                         Already have an account?{' '}

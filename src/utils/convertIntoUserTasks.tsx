@@ -43,12 +43,13 @@ export const convertAdminTemplateToTaskData = (template: AdminTemplate): TaskRow
         triggerType: step.trigger ?? "completed",
 
         notes: "",
-        popup: step.popup
-          ? { description: step.popup.description ?? "" }   // convert null → ""
+        popupDescription: step.popupDescription
+          ?  step.popupDescription ?? ""     // convert null → ""
           : undefined,
         linkedStep: step.linkedStep
           ? {
             id: step.linkedStep.id,
+            notes: step.linkedStep.notes || "",
             futureColumnThings: step.linkedStep.futureColumnThings ?? [],
           }
           : undefined,

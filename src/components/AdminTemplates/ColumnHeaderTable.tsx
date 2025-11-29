@@ -109,8 +109,8 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({  categories,name,
     triggerType: s.trigger ?? "completed",
 
     // ✅ Popup mapping (if admin set one)
-    popup: s.trigger === "popup" && s.popup
-      ? { description: s.popup.description ?? "" }
+    popupDescription: s.trigger === "popup" && s.popupDescription
+      ?   s.popupDescription ?? "" 
       : undefined,
 
     // ✅ Relation / linked steps mapping

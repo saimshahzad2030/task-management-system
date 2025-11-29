@@ -7,13 +7,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 
 import { AdminTemplate, Categories, ColumnDetails, Step, TaskRow } from "@/global/types";
-import { adminTemplates as aT } from "@/global/constant";
+// import { adminTemplates as aT } from "@/global/constant";
 import ColumnHeaderTable from "./ColumnHeaderTable";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Switch } from "../ui/switch";
 import { config } from "../../../config/config";
+import { allowTemplateAccessToUser, createAdminTemplate, deleteTemplate, fetchAllTemplatesService, updateAdminTemplate } from "@/services/adminTemplate.services";
+import SkeletonLoader from "../Loader/SkeletonLoader";
+import { fetchAllUsersService } from "@/services/user.services";
+import { set } from "zod";
 
 const showRequiredToast = (title: string, desc: string) => {
   toast.custom((t) => (
@@ -48,7 +52,7 @@ export default function AdminTemplates() {
         type: "check",
         trigger: "completed",
         info: "",
-        popup: { description: "" },
+        popupDescription: "",
         columnDetails: [],
         linkedStep: null,
       },
@@ -59,11 +63,23 @@ export default function AdminTemplates() {
   };
 
 
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+
 
   const [editingTemplate, setEditingTemplate] = useState<AdminTemplate | null>(null);
   const [columnDetails, setColumnDetails] = useState<ColumnDetails>([])
-  const [adminTemplates, setAdminTemplates] = React.useState<AdminTemplate[] | []>(aT)
+  const [usersToAssign, setUsersToAssign] = useState<{
+    id: number,
+    username: string,
+    email: string
+  }[]>([])
+  const [usersToAssignLoading, setUsersToAssignLoading] = useState(false)
+  const [usersToAssignFinalLoading, setUsersToAssignFinalLoading] = useState(false)
+  const [adminTemplates, setAdminTemplates] = React.useState<AdminTemplate[] | []>()
   const [showForm, setShowForm] = useState(false);
+  const [templateFetchLoading, setTemplateFetchLoading] = useState(true);
   const [edit, setEdit] = useState(false);
 
   // new template state
@@ -76,20 +92,20 @@ export default function AdminTemplates() {
   const [modalType, setModalType] = useState<"view" | "edit" | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<AdminTemplate | null>(null);
   const onView = (id: string) => {
-    const found = adminTemplates.find(t => t.id === id);
+    const found = adminTemplates?.find(t => t.id === id);
     setSelectedTemplate(found ?? null);
     setModalType("view");
   };
 
   const onEdit = (id: string) => {
-    const found = adminTemplates.find(t => t.id === id);
+    const found = adminTemplates?.find(t => t.id === id);
     setSelectedTemplate(found ?? null);
     setModalType("edit");
   };
 
   const handleEditTemplate = (tmpl: AdminTemplate) => {
     setEditingTemplate(tmpl);
-
+    setTemplateName(tmpl.name)
     // Pre-fill form fields
     setCategories(tmpl.categories);
     setDescription(tmpl.description);
@@ -101,15 +117,25 @@ export default function AdminTemplates() {
 
   const onDelete = (id: string) => {
     toast.custom((t) => (
-      <div className="p-4 border border-gray-200 rounded-lg shadow-md w-[300px]  ">
+      <div className="p-4 border border-gray-200 rounded-lg shadow-md w-[300px]  bg-white border border-red-500">
         <p className="text-gray-900 text-md ">Are you sure?</p>
 
         <p className="text-gray-700 text-xs mb-2">you want to delete this template? This action can't be undone</p>
 
         <div className="flex justify-end">
-          <Button className="ml-2" size="sm" onClick={() => {
-            setAdminTemplates(prev => prev.filter(t => t.id !== id))
-            toast.dismiss(t)
+          <Button className="ml-2 bg-red-500 text-white" size="sm" onClick={async () => {
+
+            let deletingTemplate = await deleteTemplate(Number(id))
+            if (deletingTemplate.status == 200 || deletingTemplate.status == 201) {
+              toast.success(deletingTemplate.message);
+              setAdminTemplates(prev => prev?.filter(t => t.id !== id));
+              toast.dismiss(t)
+
+            }
+            else {
+              toast.error(deletingTemplate.message);
+              toast.dismiss(t)
+            }
           }} variant="outline">
             Yes
           </Button>
@@ -143,7 +169,7 @@ export default function AdminTemplates() {
           warning: { days: 6, color: "#FFD93D" },
           danger: { days: 3, color: "#FF6B6B" },
         },
-        popup: { description: null },
+        popupDescription: null,
         columnDetails: [],
         linkedStep: null
       },
@@ -217,7 +243,7 @@ export default function AdminTemplates() {
     setCategories(prev => prev.filter((_, i) => i !== index));
   };
 
-  const saveTemplate = () => {
+  const saveTemplate = async () => {
     if (!categories) {
       showRequiredToast(
         "Category Required",
@@ -269,18 +295,25 @@ export default function AdminTemplates() {
         color,
         description,
         steps,
-        timeSensitiveColors: {
-          warning: { days: 6, color: warningColor },
-          danger: { days: 3, color: dangerColor }
-        },
+
         updatedAt: new Date()
       };
-      console.log("updated")
-      setAdminTemplates(prev =>
-        prev.map(t => (t.id === editingTemplate.id ? updated : t))
-      );
+      let nTemplate = await updateAdminTemplate(Number(editingTemplate.id), updated)
 
-      toast.success("Template updated!");
+      if (nTemplate.status == 201 || nTemplate.status == 200) {
+        toast.success(nTemplate.message);
+        setAdminTemplates(prev =>
+          prev?.map(t => (t.id === editingTemplate.id ? nTemplate.data : t))
+        );
+
+        setData(null)
+        resetForm();
+      }
+      else {
+        toast.error(nTemplate.message);
+
+      }
+
     } else {
       // ----------------------
       // CREATE NEW TEMPLATE
@@ -295,24 +328,40 @@ export default function AdminTemplates() {
         createdAt: new Date(),
         updatedAt: new Date()
       };
-      console.log(newTemplate, "newTemplate")
-      setAdminTemplates(prev => [...prev, newTemplate]);
-      toast.success("New template created!");
+      let nTemplate = await createAdminTemplate(newTemplate)
+
+      console.log(nTemplate.data[0], "newTemplate")
+      if (nTemplate.status == 201 || nTemplate.status == 200) {
+        toast.success(nTemplate.message);
+        setAdminTemplates(prev => [...(prev || []), nTemplate.data[0]]);
+        setData(null)
+        resetForm();
+      }
+      else {
+        toast.error(nTemplate.message);
+
+      }
     }
-    setData(null)
+
     // Reset form
-    resetForm();
   };
 
-
+  React.useEffect(() => {
+    const fetchTemplates = async () => {
+      let temps = await fetchAllTemplatesService()
+      setAdminTemplates(temps.data || [])
+      setTemplateFetchLoading(false)
+    }
+    fetchTemplates()
+  }, [])
 
   return (
     <div className="border rounded-lg p-4 bg-white space-y-4 w-full">
       {/* Toggle Form */}
       <Button onClick={() => {
-    
-      resetForm();     // ← RESET EVERYTHING when closing
-  
+
+        resetForm();     // ← RESET EVERYTHING when closing
+
         setShowForm(!showForm)
         setTemplateName(``)
       }}>
@@ -342,7 +391,7 @@ export default function AdminTemplates() {
             </div> */}
             <div className="col-span-1 rounded-md bg-gray-200 p-4 ">
               <label className="text-sm font-semibold">Description</label>
-              <Textarea className="bg-white border border-gray-400 "  placeholder="Enter Template Description" value={description} onChange={e => setDescription(e.target.value)} />
+              <Textarea className="bg-white border border-gray-400 " placeholder="Enter Template Description" value={description} onChange={e => setDescription(e.target.value)} />
             </div>
 
           </div>
@@ -446,12 +495,11 @@ export default function AdminTemplates() {
                     <Textarea
                       placeholder="Popup Text"
                       className="mt-3 border  rounded bg-white space-y-3 border-gray-400"
-                      value={step?.popup?.description ?? ""}
+                      value={step?.popupDescription ?? ""}
                       onChange={(e) =>
-                        updateStep(index, "popup", {
-                          ...step.popup,
-                          description: e.target.value,
-                        })
+                        updateStep(index, "popupDescription",
+                          e.target.value
+                        )
                       }
                     />
 
@@ -572,7 +620,7 @@ export default function AdminTemplates() {
                               <label className="text-xs">Related Step</label>
 
                               <Select
-                                onValueChange={(v) => updateStep(index, "linkedStep", { id: Number(v), notes: step.linkedStep?.notes || "", futureColumnThings: step.linkedStep?.futureColumnThings || [] })}
+                                onValueChange={(v) => updateStep(index, "linkedStep", { index: Number(v), notes: step.linkedStep?.notes || "", futureColumnThings: step.linkedStep?.futureColumnThings || [] })}
                                 defaultValue={step.linkedStep?.id?.toString()}
                               >
                                 <SelectTrigger className="min-w-[100px] bg-white border border-gray-400">
@@ -581,10 +629,10 @@ export default function AdminTemplates() {
 
                                 <SelectContent>
                                   {steps
-                                    .filter((_, i) => i !== index) // cannot link to itself
-                                    .map((s, i) => (
-                                      <SelectItem key={s.id} value={s.id.toString()}>
-                                        Step {s.id}: {s.name || "Unnamed"}
+                                    // cannot link to itself
+                                    .map((s, ind) => (
+                                      <SelectItem key={s.id} disabled={ind === index} value={ind.toString()}>
+                                        Step {Number(ind) + 1}: {s.name || "Unnamed"}
                                       </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -856,50 +904,105 @@ export default function AdminTemplates() {
         </div>
       )}
 
-      {/* ✅ Preview saved templates */}
+
       <div>
         <h3 className="font-bold">Existing Templates</h3>
 
-        <table className="mt-3 w-full border-collapse text-sm">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border px-3 py-2 text-left">Name</th>
-              <th className="border px-3 py-2 text-left">Total Steps</th>
-              <th className="border px-3 py-2 text-left">Description</th>
-              <th className="border px-3 py-2 text-left">Created At</th>
-              <th className="border px-3 py-2 text-left">Updated At</th>
-              <th className="border px-3 py-2 text-left">Actions</th>
-            </tr>
-          </thead>
+        {templateFetchLoading ?
+          <table className="mt-3 w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border px-3 py-2 text-left">Name</th>
+                <th className="border px-3 py-2 text-left">Total Steps</th>
+                <th className="border px-3 py-2 text-left">Description</th>
+                <th className="border px-3 py-2 text-left">Created At</th>
+                <th className="border px-3 py-2 text-left">Updated At</th>
+                <th className="border px-3 py-2 text-left">Actions</th>
+              </tr>
+            </thead>
 
-          <tbody>
-            {adminTemplates.map((t) => {
+            <tbody>
+              {[1, 2, 3, 4, 4, 4, 4].map((t, index) => {
 
-              return (
-                <tr key={t.id}>
-                  <td className="border px-3 py-2 font-semibold capitalize"  >
-                    {t.name}
-                  </td>
+                return (
+                  <tr key={index}>
+                    <td className="border px-3 py-2 font-semibold capitalize"  >
+                      <SkeletonLoader className="bg-gray-400 w-8 h-4" />
+                    </td>
 
 
 
-                  <td className="border px-3 py-2">
-                    {t.steps.filter((s) => { return s.type == 'check' }).length}
-                  </td>
+                    <td className="border px-3 py-2">
+                      <SkeletonLoader className="bg-gray-400 w-8 h-4" />
 
-                  <td className="border px-3 py-2">
-                    {t.description}
-                  </td>
-                  <td className="border px-3 py-2">
-                    {t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "-"}
-                  </td>
+                    </td>
 
-                  <td className="border px-3 py-2">
-                    {t.updatedAt ? new Date(t.updatedAt).toLocaleDateString() : "-"}
-                  </td>
+                    <td className="border px-3 py-2">
+                      <SkeletonLoader className="bg-gray-400 w-8 h-4" />
 
-                  <td className="border px-3 py-2 space-x-2">
-                    {/* <button
+                    </td>
+                    <td className="border px-3 py-2">
+                      <SkeletonLoader className="bg-gray-400 w-8 h-4" />
+
+                    </td>
+
+                    <td className="border px-3 py-2">
+                      <SkeletonLoader className="bg-gray-400 w-8 h-4" />
+
+                    </td>
+
+                    <td className="border px-3 py-2 space-x-2">
+                      <div className="w-full flex flex-row items-center">
+                        <SkeletonLoader className="mx-1 bg-gray-400 w-8 h-4" /> <SkeletonLoader className="mx-1 bg-gray-400 w-8 h-4" /> <SkeletonLoader className="mx-1 bg-gray-400 w-8 h-4" />
+                        <SkeletonLoader className="mx-1 bg-gray-400 w-12 h-4" />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table> :
+          <>{adminTemplates && adminTemplates?.length > 0 ?
+            <table className="mt-3 w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border px-3 py-2 text-left">Name</th>
+                  <th className="border px-3 py-2 text-left">Enabled Users</th>
+                  <th className="border px-3 py-2 text-left">Description</th>
+                  <th className="border px-3 py-2 text-left">Created At</th>
+                  <th className="border px-3 py-2 text-left">Updated At</th>
+                  <th className="border px-3 py-2 text-left">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {adminTemplates.map((t) => {
+
+                  return (
+                    <tr key={t.id}>
+                      <td className="border px-3 py-2 font-semibold capitalize"  >
+                        {t.name}
+                      </td>
+
+
+
+                      <td className="border px-3 py-2">
+                        {t?.enabledUsers?.length==0?"None":t?.enabledUsers?.map((u) => u.email).join(", ")}
+                      </td>
+
+                      <td className="border px-3 py-2">
+                        {t.description}
+                      </td>
+                      <td className="border px-3 py-2">
+                        {t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "-"}
+                      </td>
+
+                      <td className="border px-3 py-2">
+                        {t.updatedAt ? new Date(t.updatedAt).toLocaleDateString() : "-"}
+                      </td>
+
+                      <td className="border px-3 py-2 space-x-2">
+                        {/* <button
                 className="text-blue-600 underline"
                 onClick={() => onView(t.id)}
               >
@@ -907,30 +1010,118 @@ export default function AdminTemplates() {
               </button>
 
              */}
-                    <Link className="  underline cursor-pointer " href={`${config.FRONTEND_URL}user-tasks/${t.id}`} target="_blank"
-                      rel="noopener noreferrer" passHref>
-                      Open </Link>
-                    <button
-                      className="text-blue-600 underline cursor-pointer "
-                      onClick={() => handleEditTemplate(t)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="text-red-600 underline cursor-pointer "
-                      onClick={() => onDelete(t.id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                        <Link className="  underline cursor-pointer " href={`${config.FRONTEND_URL}user-tasks/${t.id}`} target="_blank"
+                          rel="noopener noreferrer" passHref>
+                          Open </Link>
+                        <button
+                          className="text-blue-600 underline cursor-pointer "
+                          onClick={() => handleEditTemplate(t)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="text-red-600 underline cursor-pointer "
+                          onClick={() => onDelete(t.id)}
+                        >
+                          Delete
+                        </button>
+                        <button
+                          className="text-green-600 underline cursor-pointer "
+                          onClick={async () => {
+                            setUsersToAssignLoading(true)
+                            setEditingTemplate(t)
+                            setShowUserModal(true)
+                            let fetchedUsers = await fetchAllUsersService()
+                            setUsersToAssign(fetchedUsers.data || [])
+                            setUsersToAssignLoading(false)
+                          }}>
+                          Enable Users
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table> :
+            <div className="w-full flex flex-col items-center justify-center p-8"> No Templates to show for now</div>
+          }</>}
+
+
       </div>
 
+      {showUserModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white w-[400px] rounded-lg shadow-lg p-5">
 
+            {/* Header */}
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold">Select User</h2>
+              <button onClick={() => setShowUserModal(false)}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Select Input */}
+            <div className="mb-4">
+              <label className="text-sm font-medium">User</label>
+
+              <Select
+                onValueChange={(val) => setSelectedUserId(val)}
+              >
+                <SelectTrigger className="bg-white border-gray-300">
+                  <SelectValue placeholder="Choose User" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {usersToAssignLoading ?
+                    <SkeletonLoader className="bg-gray-400 w-full h-8" />
+                    :
+                    <>{usersToAssign.map((u) => (
+                      <SelectItem key={u.id} value={u.id.toString()}>
+                        {u.email}
+                      </SelectItem>
+                    ))}</>}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex justify-end gap-2 mt-4">
+              <Button variant="outline" className="cursor-pointer" onClick={() => setShowUserModal(false)}>
+                Cancel
+              </Button>
+              <Button className="bg-blue-600 text-white cursor-pointer"
+                onClick={async () => {
+                  
+                  if (!selectedUserId) {
+                    toast.error("Please select a user first");
+                    return;
+                  }
+                  setUsersToAssignFinalLoading(true)
+                  let allowAccess  = await allowTemplateAccessToUser(Number(editingTemplate?.id) || 1, Number(selectedUserId));
+                  if(allowAccess.status === 200 || allowAccess.status === 201){
+                      setAdminTemplates(prev =>
+          prev?.map(t => (t.id === editingTemplate?.id   ? allowAccess.data : t))
+        );
+                    toast.success(allowAccess.message || "Access granted to user successfully");
+                  }else{
+                    toast.error(allowAccess.message || "Failed to grant access to user");
+                  }
+                  // const user = usersToAssign.find((u) => u.id.toString() === selectedUserId);
+
+                  // console.log("Selected User:", user);
+ 
+                  setUsersToAssignFinalLoading(false)
+
+                  setShowUserModal(false);
+                }}
+              >
+                {usersToAssignFinalLoading ? "Processing..." : "Confirm"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

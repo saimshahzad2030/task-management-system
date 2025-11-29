@@ -58,6 +58,7 @@ export const adminTemplates: AdminTemplate[] = [
           copyEnabled: false,
           category: { color: "#33c1ff", name: "cat-3", id: 3 }
         }], trigger: "relation", linkedStep: {
+          notes:"It is the note from admin to do the email check",
           id: 8, futureColumnThings: [{
             needed: true,
             description: "Do this",

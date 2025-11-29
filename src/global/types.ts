@@ -9,6 +9,7 @@ export type FinalColumnKey = "statusTL" | "completed";
     category:Categories;
   }[] ; 
 export interface Step {
+  index?:number,
   id:number;
   columnDetailsChecked:boolean
   columnDetails?:ColumnDetails ;
@@ -26,7 +27,7 @@ export interface Step {
   completed?: boolean;                     // For user tasks (false by default)
     type?: "text" | "check" | "date";       // Optional step input type
   trigger?: "popup" | "relation" | "completed" ; // Admin trigger type
-   popup?:{description:string | null} | null
+   popupDescription?:string | null
     linkedStep?:{id:number ,notes?:string, futureColumnThings?:{
         needed:boolean;
         description:string;
@@ -52,7 +53,7 @@ export interface ListStep {
     triggerType:"popup" | "relation" | "completed"
     popup?:{description:string}
     linkedStep?:{id:number,
-       
+       notes?:string,
      
       futureColumnThings?:{
         needed:boolean;
@@ -63,6 +64,8 @@ export interface ListStep {
 // Admin-created reusable template
 export interface AdminTemplate {
   id: string;
+  enabledUsers?:{id:number; email:string}[];
+
   name: string;
  categories:Categories[];
   description: string;

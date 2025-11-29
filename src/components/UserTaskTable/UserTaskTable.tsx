@@ -380,8 +380,8 @@ const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
                               };
                             }
                             if (step?.linkedStep && step.linkedStep.id == s.columnId) {
-                       
-                              return { ...s, markedNext: true };
+                       console.log(step.linkedStep.notes,"step")
+                              return { ...s, markedNext: true,notes: step.linkedStep.notes || ""  };
                             }
 
 
