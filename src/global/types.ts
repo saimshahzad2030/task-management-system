@@ -7,11 +7,15 @@ export type FinalColumnKey = "statusTL" | "completed";
     description:string;
     copyEnabled:boolean;
     category:Categories;
-  }[] ; 
+  }[] | {
+    description:string;
+    copyEnabled:boolean; 
+  } ; 
 export interface Step {
   index?:number,
   id:number;
   columnDetailsChecked:boolean
+  columnByCategoriesEnabled?:boolean
   columnDetails?:ColumnDetails ;
   timeSensitiveColors?: {
     warning: { days: number; color: string }; // Yellow at X days
@@ -37,7 +41,7 @@ export interface Step {
 export interface ListStep {
     id?:number;
     columnId:number;
-     columnDetails?:ColumnDetails;
+     columnDetails?:ColumnDetails; 
 
   unCheckOption?:{
     enabled:boolean;

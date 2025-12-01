@@ -8,6 +8,8 @@ export const convertAdminTemplateToTaskData = (template: AdminTemplate): TaskRow
       type: (step.type ?? "text") as "text" | "date" | "check",
       value: "",
       columnId: idx + 1,
+      timeSensitiveColors: step.timeSensitiveColors ?? undefined,
+      isTimeSensitive: step.isTimeSensitive ?? false,
     }));
   return {
     id: crypto.randomUUID(),
@@ -32,8 +34,7 @@ export const convertAdminTemplateToTaskData = (template: AdminTemplate): TaskRow
         id: index + 1,
         completed: false,
         markedNext: false,
-        markedNextRed: false,
-
+        markedNextRed: false, 
         columnId: step?.id ?? 1, // default
 
         name: step.name,

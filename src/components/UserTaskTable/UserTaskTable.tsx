@@ -522,9 +522,9 @@ React.useEffect(() => {
                   ))}
 
                   {/* Time Sensitive Date */}
-                  <th className="px-4 h-[50px] min-w-[160px] text-center  text-[11px]  pt-8 ">
+                  {/* <th className="px-4 h-[50px] min-w-[160px] text-center  text-[11px]  pt-8 ">
                     TIME SENSITIVE DATE
-                  </th>
+                  </th> */}
 
                   {/* Non-TimeSensitive Step Columns */}
                   {adminTemplate.steps.filter((s)=>{return s.type=='check'}).map((step, index) => (
@@ -535,7 +535,8 @@ React.useEffect(() => {
                       <div className="w-full flex flex-col items-center">
                         {step.columnDetails ? <button
                           className="my-2 cursor-pointer"
-                          onClick={() => HeaderDetails(step.columnDetails as ColumnDetails, step.name)}
+                          onClick={() => {console.log(step.columnDetails) 
+                            HeaderDetails(step.columnDetails as ColumnDetails, step.name)}}
 
                         >
 
@@ -604,13 +605,13 @@ React.useEffect(() => {
                               style={{
                                 backgroundColor: row.taskLineChecked
                                   ? "#e7000b"
-                                  : index === 0
+                                  : index === 0 && colObj?.type=='text'
                                     ? row.color
                                     : "white",
                                 color: row.taskLineChecked
                                   ? "white"
-                                  : index === 0
-                                    ? getContrastText(row.color)
+                                  : index === 0  
+                                    ?  getContrastText(row.color) 
                                     : "#1e2939",
                               }}
 
@@ -636,27 +637,77 @@ React.useEffect(() => {
                                     }}
                                   />
                                 ) : colObj.type === "date" ? (
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <button
-                                        className={` w-full text-xs text-center py-2 bg-transparent    focus:outline-none cursor-pointer ${row.taskLineChecked
-                                          ? "text-white italic"
-                                          : colObj.value
-                                            ? "text-gray-800"
-                                            : "text-gray-400 italic"
-                                          }`}
-                                      >
-                                        {colObj.value || "Select date..."}
-                                      </button>
-                                    </PopoverTrigger>
+                                    <Popover>
+                            <PopoverTrigger onClick={()=>console.log(colObj)} asChild>
+                              {(() => {
+                                // --- Determine background color ---
+                                let bgColor = "transparent";
+                                if (!row.taskLineChecked && colObj.value) {
+                                  const today = new Date();
+                                  const due = new Date(colObj.value);
+                                  const diffDays = Math.ceil(
+                                    (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+                                  );
 
-                                    <PopoverContent className="w-auto p-0" align="center">
-                                      <Calendar
-                                        mode="single"
-                                        selected={
-                                          colObj.value ? new Date(colObj.value) : undefined
-                                        }
-                                        onSelect={(date) => {
+                                  const { warning, danger } = colObj.timeSensitiveColors || {};
+                                  if (danger && diffDays <= danger.days) bgColor = danger.color;
+                                  else if (warning && diffDays <= warning.days) bgColor = warning.color;
+                                }
+
+                                // --- Compute luminance to choose contrasting text color ---
+                                const hex = bgColor.replace("#", "");
+                                const r = parseInt(hex.substring(0, 2), 16);
+                                const g = parseInt(hex.substring(2, 4), 16);
+                                const b = parseInt(hex.substring(4, 6), 16);
+                                const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                                let textColor = "#000"; // default
+                                if (bgColor && bgColor.startsWith("#")) {
+                                  const hex = bgColor.replace("#", "");
+                                  const r = parseInt(hex.substring(0, 2), 16);
+                                  const g = parseInt(hex.substring(2, 4), 16);
+                                  const b = parseInt(hex.substring(4, 6), 16);
+                                  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                                  textColor = luminance > 0.6 ? "#000" : "#fff";
+                                }
+
+                                return (
+                                  <div
+                                    className={cn(
+                                      "w-full text-xs text-center py-2 bg-transparent focus:outline-none cursor-pointer rounded-md italic"
+                                    )}
+
+                                  >
+                                    {colObj.value ? (
+                                      <span
+                                        style={{
+                                          padding: '4px',
+                                          backgroundColor:colObj.isTimeSensitive? bgColor:"transparent",
+                                          color: row.taskLineChecked
+                                            ? "white"
+                                            : colObj.isTimeSensitive
+                                              ? textColor
+                                              : "gray",
+                                        }}
+                                        className="font-medium not-italic">
+                                        {colObj.value} 
+                                      </span>
+                                    ) : (
+                                      <span className="text-gray-400 italic">Select date...</span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+                            </PopoverTrigger>
+
+                            <PopoverContent className="p-0 w-auto" align="center">
+                              <Calendar
+                                mode="single"
+                                selected={
+                                  colObj.value ? new Date( colObj.value) : undefined
+                                }
+                               
+
+ onSelect={(date) => {
                                           if (!date) return;
                                           // ✅ Convert to local YYYY-MM-DD to avoid timezone shifts
                                           const yyyy = date.getFullYear();
@@ -675,9 +726,10 @@ React.useEffect(() => {
                                             return updated;
                                           });
                                         }}
-                                      />
-                                    </PopoverContent>
-                                  </Popover>
+                              />
+                            </PopoverContent>
+                          </Popover>
+
                                 ) : (
                                   <span className="text-gray-400">-</span>
                                 )

@@ -18,6 +18,7 @@ import { allowTemplateAccessToUser, createAdminTemplate, deleteTemplate, fetchAl
 import SkeletonLoader from "../Loader/SkeletonLoader";
 import { fetchAllUsersService } from "@/services/user.services";
 import { set } from "zod";
+import { QuestionMark } from "@/global/icons";
 
 const showRequiredToast = (title: string, desc: string) => {
   toast.custom((t) => (
@@ -57,7 +58,13 @@ export default function AdminTemplates() {
         linkedStep: null,
       },
     ]);
-
+    setCategories([
+      {
+        color: "#000000",
+        name: "Category 1",
+        id: 1
+      },
+    ]);
     setEditingTemplate(null); // <— EXIT EDIT MODE
     setShowForm(false);
   };
@@ -83,7 +90,7 @@ export default function AdminTemplates() {
   const [edit, setEdit] = useState(false);
 
   // new template state
-  const [categories, setCategories] = useState<Categories[]>([{ color: "#000000", name: "", id: 1 }]);
+  const [categories, setCategories] = useState<Categories[]>([{ color: "#000000", name: "Category 1", id: 1 }]);
   const [warningColor, setWarningColor] = useState("#FFD93D"); // 6 days
   const [templateName, setTemplateName] = useState(""); // 6 days
   const [dangerColor, setDangerColor] = useState("#FF6B6B");
@@ -169,6 +176,7 @@ export default function AdminTemplates() {
           warning: { days: 6, color: "#FFD93D" },
           danger: { days: 3, color: "#FF6B6B" },
         },
+
         popupDescription: null,
         columnDetails: [],
         linkedStep: null
@@ -185,6 +193,26 @@ export default function AdminTemplates() {
 
       },
     ]);
+    const updatedSteps = steps.map(step => {
+      // Only update steps that have columnDetails
+      if (step.columnDetails && Array.isArray(step.columnDetails)) {
+        return {
+          ...step,
+          columnDetails: [
+            ...step.columnDetails,
+            {
+              description: "",
+              copyEnabled: false,
+              category: { id: categories.length + 1, name: "", color: "#000000" }
+            }
+          ]
+        };
+      }
+      return step;
+    });
+
+    // Then update your state or call updateStep for each
+    setSteps(updatedSteps);
   };
   const updateCategory = <K extends keyof Categories>(
     index: number,
@@ -196,6 +224,26 @@ export default function AdminTemplates() {
       copy[index][field] = value;
       return copy;
     });
+    setSteps(prevSteps =>
+      prevSteps.map(step => ({
+        ...step,
+        columnDetails: Array.isArray(step.columnDetails)
+          ? step.columnDetails.map(col => {
+            if (col.category.id === index + 1) { // match category
+              return {
+                ...col,
+                category: {
+                  ...col.category,
+                  [field]: value
+                }
+              };
+            }
+            return col;
+          })
+          : step.columnDetails // leave as is if not an array
+      }))
+    );
+
   };
 
   // Update step field dynamically
@@ -284,7 +332,67 @@ export default function AdminTemplates() {
       );
       return;
     }
+    if (!steps || !Array.isArray(steps) || steps.length === 0) {
+      showRequiredToast(
+        "Columns Required",
+        "Please add at least one Column to the template."
+      );
+      return;
+    }
 
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      if (!step.name || !step.name.trim()) {
+        toast.error(
+          "Column Name Required"
+        );
+        return;
+      }
+      if (!step.type || !step.type.trim()) {
+        toast.error(
+          `column ${i + 1}: Please select a type`
+        );
+
+        return;
+      }
+
+ 
+       if (categories ) {
+for (let j = 0; j < categories.length; j++) {
+const col = categories[j];
+if (!col.color || !col.name.trim()) {
+   toast.error(
+          `Please Fill the category name for Category ${j + 1} `
+        );
+ 
+return; 
+}
+}
+}
+      if (step.columnDetails && Array.isArray(step.columnDetails)) {
+for (let j = 0; j < step.columnDetails.length; j++) {
+const col = step.columnDetails[j];
+if (!col.description || !col.description.trim()) {
+   toast.error(
+          `column ${i + 1}: Please Fill the column details for category ${col.category.name}`
+        );
+ 
+return; 
+}
+}
+}
+if (step.trigger == 'relation' && !step.linkedStep) {
+        toast.error(
+          `column ${i + 1}: Please Specify Related Step`
+        );
+
+        return;
+      }
+ 
+      // Add more step-specific validation here if needed
+      // e.g., validate linkedStep, comments, or attachments
+
+    }
     if (editingTemplate) {
       // ----------------------
       // UPDATE EXISTING TEMPLATE
@@ -798,65 +906,76 @@ export default function AdminTemplates() {
                 </div>}
 
                 {/* COLUMN DETAILS SECTION */}
-                {step.type === "check" && (
-                  <div className="w-full col-span-4">
 
-                    {/* Checkbox to toggle UI */}
-                    <label className="flex items-center  mt-2 cursor-pointer ">
-                      <span className="text-sm mr-2">Add Column Details</span>
-                      <input
-                        type="checkbox"
-                        checked={!!step.columnDetailsChecked}
-                        onChange={(e) => {
-                          const checked = e.target.checked;
+              </div>
+              {step.type == 'check' && <div className="w-full flex flex-col items-start">
+                <div className="w-full flex flex-row items-center justify-between">
+                  <div className="flex flex-row items-center">   <label className="font-semibold text-xs mr-2">Please enter guidelines or text/email Templates to for this task. This guideline will show up above the column title by clicking this icon:</label> <QuestionMark />
+                  </div>
+                  <label className="flex items-center  mt-2 cursor-pointer ">
+                    <input
+                      type="checkbox"
+                      checked={!!step.columnDetailsChecked}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
 
-                          // Build columnDetails array only if checked
-                          const updatedArray = checked
-                            ? categories.map((cat) => ({
-                              description: "",
-                              copyEnabled: false,
-                              category: cat,
-                            }))
-                            : null; // set to null if unchecked
+                        // Build columnDetails array only if checked
+                        const updatedArray = checked
+                          ? categories.map((cat) => ({
+                            description: "",
+                            copyEnabled: false,
+                            category: cat,
+                          }))
+                          : null; // set to null if unchecked
 
-                          // Update the step state
-                          updateStep(index, "columnDetailsChecked", checked);
-                          updateStep(index, "columnDetails", updatedArray);
-                        }}
+                        // Update the step state
+                        updateStep(index, "columnDetailsChecked", checked);
+                        updateStep(index, "columnDetails", updatedArray);
+                      }}
 
-                      />
-                    </label>
+                    />
+                    <span className="text-sm ml-2">Seperate Guidelines by Category</span>
 
-                    {/* Render the panel if columnDetails exists */}
-                    {step.columnDetailsChecked && <div className="grid grid-cols-3 gap-2 w-full  rounded-md">
+                  </label>
+                </div>
 
-                      <>
-                        <p className="col-span-3 text-gray-500 text-xs">Below are the details of this column with respect to the template Categories.</p>
-                        {Array.isArray(step.columnDetails) && step.columnDetails.map((cat, catIndex) => (
-                          <div key={catIndex} className="my-1 flex flex-col items-start w-full border border-gray-500 rounded-md p-2">
+              </div>}
+              {step.type === "check" && (
+                <div className="w-full col-span-4">
 
-                            <div className="flex flex-row items-center ">
-                              <h3 className="font-semibold text-gray-600 text-sm">{`(Category ${catIndex + 1}) `}<span className="text-xs text-gray-500">{cat.category.name}</span></h3>
-                              <div className="ml-2 w-4 h-4 rounded-full" style={{ backgroundColor: cat.category.color }}></div>
-                            </div>
-                            <div className=" w-full   mt-2  rounded border      flex flex-row items-center">
-
-                              <Textarea
-                                className="w-full bg-white border border-gray-400  "
-                                placeholder="Column Details"
-                                value={step.columnDetails ? step.columnDetails[catIndex].description : ""}
-                                onChange={(e) => {
-                                  if (!Array.isArray(step.columnDetails)) return
-                                  const updated = step?.columnDetails.map((item, i) =>
-                                    i === catIndex ? { ...item, description: e.target.value } : item
-                                  );
-                                  updateStep(index, "columnDetails", updated);
-                                }}
-                              />
+                  {/* Checkbox to toggle UI */}
 
 
+                  {/* Render the panel if columnDetails exists */}
+                  {step.columnDetailsChecked ? <div className="grid grid-cols-3 gap-2 w-full  rounded-md">
 
-                              {/* <label className="flex items-center gap-2 cursor-pointer ml-4">
+                    <>
+                      <p className="col-span-3 text-gray-500 text-xs">Below are the details of this column with respect to the template Categories.</p>
+                      {Array.isArray(step.columnDetails) && step.columnDetails.map((cat, catIndex) => (
+                        <div key={catIndex} className="my-1 flex flex-col items-start w-full border border-gray-500 rounded-md p-2">
+
+                          <div className="flex flex-row items-center ">
+                            <h3 className="font-semibold text-gray-600 text-sm">{`(Category ${catIndex + 1}) `}<span className="text-xs text-gray-500">{cat.category.name}</span></h3>
+                            <div className="ml-2 w-4 h-4 rounded-full" style={{ backgroundColor: cat.category.color }}></div>
+                          </div>
+                          <div className=" w-full   mt-2  rounded border      flex flex-row items-center">
+
+                            <Textarea
+                              className="w-full bg-white border border-gray-400  "
+                              placeholder="Column Details"
+                              value={step.columnDetails && Array.isArray(step.columnDetails) ? step.columnDetails[catIndex].description : ""}
+                              onChange={(e) => {
+                                if (!Array.isArray(step.columnDetails)) return
+                                const updated = step?.columnDetails.map((item, i) =>
+                                  i === catIndex ? { ...item, description: e.target.value } : item
+                                );
+                                updateStep(index, "columnDetails", updated);
+                              }}
+                            />
+
+
+
+                            {/* <label className="flex items-center gap-2 cursor-pointer ml-4">
                                 <input
                                   type="checkbox"
                                   checked={step.columnDetails ? step.columnDetails[catIndex].copyEnabled : false}
@@ -872,23 +991,23 @@ export default function AdminTemplates() {
                                 <span className="text-xs">Enable Copy Button</span>
                               </label> */}
 
-                            </div>
                           </div>
-                        ))}
-                      </>
-                    </div>}
+                        </div>
+                      ))}
+                    </>
+                  </div> :
+                    <Textarea
+                      className="border border-gray-400 bg-white w-auto min-w-6/12"
+                      value={step.description}
+                      onChange={e => updateStep(index, "columnDetails", { description: e.target.value, copyEnabled: true })}
 
-                  </div>
-                )}
+                    />
+                  }
 
-              </div>
+                </div>
+              )}
 
-              {/* <Textarea
-                placeholder="Description"
-                className="border border-gray-400 bg-white"
-                value={step.description}
-                onChange={e => updateStep(index, "description", e.target.value)}
-              /> */}
+
             </div>
           ))}
 
@@ -987,7 +1106,7 @@ export default function AdminTemplates() {
 
 
                       <td className="border px-3 py-2">
-                        {t?.enabledUsers?.length==0?"None":t?.enabledUsers?.map((u) => u.email).join(", ")}
+                        {t?.enabledUsers?.length == 0 ? "None" : t?.enabledUsers?.map((u) => u.email).join(", ")}
                       </td>
 
                       <td className="border px-3 py-2">
@@ -1092,25 +1211,25 @@ export default function AdminTemplates() {
               </Button>
               <Button className="bg-blue-600 text-white cursor-pointer"
                 onClick={async () => {
-                  
+
                   if (!selectedUserId) {
                     toast.error("Please select a user first");
                     return;
                   }
                   setUsersToAssignFinalLoading(true)
-                  let allowAccess  = await allowTemplateAccessToUser(Number(editingTemplate?.id) || 1, Number(selectedUserId));
-                  if(allowAccess.status === 200 || allowAccess.status === 201){
-                      setAdminTemplates(prev =>
-          prev?.map(t => (t.id === editingTemplate?.id   ? allowAccess.data : t))
-        );
+                  let allowAccess = await allowTemplateAccessToUser(Number(editingTemplate?.id) || 1, Number(selectedUserId));
+                  if (allowAccess.status === 200 || allowAccess.status === 201) {
+                    setAdminTemplates(prev =>
+                      prev?.map(t => (t.id === editingTemplate?.id ? allowAccess.data : t))
+                    );
                     toast.success(allowAccess.message || "Access granted to user successfully");
-                  }else{
+                  } else {
                     toast.error(allowAccess.message || "Failed to grant access to user");
                   }
                   // const user = usersToAssign.find((u) => u.id.toString() === selectedUserId);
 
                   // console.log("Selected User:", user);
- 
+
                   setUsersToAssignFinalLoading(false)
 
                   setShowUserModal(false);

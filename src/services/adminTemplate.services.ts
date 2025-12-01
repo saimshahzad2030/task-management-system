@@ -1,5 +1,9 @@
 import { Step } from "@/global/types";
-import axiosInstance from "../../axios/axiosInstance";
+import axiosInstance, { axiosInstanceJson } from "../../axios/axiosInstance";
+import Cookies from "js-cookie";
+import { config } from "../../config/config";
+import axios from "axios";
+ 
 export interface AdminTemplatePayload {
   name: string;
   description: string;
@@ -89,4 +93,25 @@ export const allowTemplateAccessToUser = async (id:number,userId:number) => {
       message: error.response?.data.message || "Something went wrong",
     };
   }
+};
+export const fetchSpecificTemplate = async (templateId:number,token:string | undefined) => {
+try {
+ 
+const response = await axios.get(`${config.BASE_URL}user-allowed-template?templateId=${templateId}`,{headers:{
+Authorization: `Bearer ${token }`
+}}); // adjust the route if needed
+console.log(response.headers)
+return {
+status: response.status,
+data: response.data.template, // match backend response
+message: response.data.message,
+};
+} catch (err) {
+  
+const error = err as { response: { status: number; data: { message: string } } };
+return {
+status: error.response?.status || 500,
+message: error.response?.data?.message || "Network Error",
+};
+}
 };

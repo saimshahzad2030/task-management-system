@@ -23,16 +23,17 @@ export const axiosInstanceJson = axios.create({
 const attachTokenInterceptor = (instance: AxiosInstance): void => {
   instance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-      const token = Cookies.get("accessToken");
+      const token = Cookies.get("accessToken"); // won't work in server components
 
-      // Retain existing headers
-      // config.headers.set("ngrok-skip-browser-warning", "true");
+      console.log("Request Headers Before Sending:", config.headers); // <-- check here
 
       if (token) {
         config.headers.set("Authorization", `Bearer ${token}`);
       } else {
         config.headers.delete("Authorization");
       }
+
+      console.log("Request Headers After Setting Authorization:", config.headers);
 
       return config;
     },
