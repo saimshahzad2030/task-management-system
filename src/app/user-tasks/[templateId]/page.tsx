@@ -19,12 +19,12 @@ const cookieStore = await cookies();
 const token = cookieStore.get("accessToken")?.value;
 const res = await fetchSpecificTemplate(Number(templateId),token);
   console.log(token)
+  console.log(res.data)
 if (res.status!==200) {
 // If backend returns 404 or error → show default Next.js 404
 notFound();
 }
-const template = await res.data;
-console.log(res.data.steps)
+const template = await res.data; 
 
 // ❌ Extra safety: if template is null or empty
 if (!template || !template.id) {

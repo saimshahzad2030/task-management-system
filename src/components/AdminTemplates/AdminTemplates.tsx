@@ -19,6 +19,7 @@ import SkeletonLoader from "../Loader/SkeletonLoader";
 import { fetchAllUsersService } from "@/services/user.services";
 import { set } from "zod";
 import { QuestionMark } from "@/global/icons";
+import FullScreenLoader from "../Loader/FullScreenLoader";
 
 const showRequiredToast = (title: string, desc: string) => {
   toast.custom((t) => (
@@ -84,6 +85,7 @@ export default function AdminTemplates() {
   }[]>([])
   const [usersToAssignLoading, setUsersToAssignLoading] = useState(false)
   const [usersToAssignFinalLoading, setUsersToAssignFinalLoading] = useState(false)
+  const [saveTemplateLoading, setSaveTemplateLoading] = useState(false)
   const [adminTemplates, setAdminTemplates] = React.useState<AdminTemplate[] | []>()
   const [showForm, setShowForm] = useState(false);
   const [templateFetchLoading, setTemplateFetchLoading] = useState(true);
@@ -292,11 +294,14 @@ export default function AdminTemplates() {
   };
 
   const saveTemplate = async () => {
+    setSaveTemplateLoading(true)
     if (!categories) {
       showRequiredToast(
         "Category Required",
         "Category name is required for creating a template."
       );
+    setSaveTemplateLoading(false)
+
       return;
     }
 
@@ -305,6 +310,8 @@ export default function AdminTemplates() {
         "Description Required",
         "Please enter a template description."
       );
+    setSaveTemplateLoading(false)
+
       return;
     }
 
@@ -313,6 +320,8 @@ export default function AdminTemplates() {
         "Color Required",
         "Please select a color for the template."
       );
+    setSaveTemplateLoading(false)
+
       return;
     }
 
@@ -322,6 +331,8 @@ export default function AdminTemplates() {
         "Warning Color Required",
         "Please choose a Warning color."
       );
+    setSaveTemplateLoading(false)
+
       return;
     }
 
@@ -330,6 +341,8 @@ export default function AdminTemplates() {
         "Danger Color Required",
         "Please choose a Danger color."
       );
+    setSaveTemplateLoading(false)
+
       return;
     }
     if (!steps || !Array.isArray(steps) || steps.length === 0) {
@@ -337,6 +350,8 @@ export default function AdminTemplates() {
         "Columns Required",
         "Please add at least one Column to the template."
       );
+    setSaveTemplateLoading(false)
+
       return;
     }
 
@@ -346,12 +361,15 @@ export default function AdminTemplates() {
         toast.error(
           "Column Name Required"
         );
+    setSaveTemplateLoading(false)
+
         return;
       }
       if (!step.type || !step.type.trim()) {
         toast.error(
           `column ${i + 1}: Please select a type`
         );
+    setSaveTemplateLoading(false)
 
         return;
       }
@@ -364,6 +382,7 @@ if (!col.color || !col.name.trim()) {
    toast.error(
           `Please Fill the category name for Category ${j + 1} `
         );
+    setSaveTemplateLoading(false)
  
 return; 
 }
@@ -376,6 +395,7 @@ if (!col.description || !col.description.trim()) {
    toast.error(
           `column ${i + 1}: Please Fill the column details for category ${col.category.name}`
         );
+    setSaveTemplateLoading(false)
  
 return; 
 }
@@ -385,18 +405,15 @@ if (step.trigger == 'relation' && !step.linkedStep) {
         toast.error(
           `column ${i + 1}: Please Specify Related Step`
         );
+    setSaveTemplateLoading(false)
 
         return;
       }
- 
-      // Add more step-specific validation here if needed
-      // e.g., validate linkedStep, comments, or attachments
+  
 
     }
     if (editingTemplate) {
-      // ----------------------
-      // UPDATE EXISTING TEMPLATE
-      // ----------------------
+       
       const updated = {
         ...editingTemplate,
         categories,
@@ -407,6 +424,7 @@ if (step.trigger == 'relation' && !step.linkedStep) {
         updatedAt: new Date()
       };
       let nTemplate = await updateAdminTemplate(Number(editingTemplate.id), updated)
+    setSaveTemplateLoading(false)
 
       if (nTemplate.status == 201 || nTemplate.status == 200) {
         toast.success(nTemplate.message);
@@ -438,7 +456,8 @@ if (step.trigger == 'relation' && !step.linkedStep) {
       };
       let nTemplate = await createAdminTemplate(newTemplate)
 
-      console.log(nTemplate.data[0], "newTemplate")
+          setSaveTemplateLoading(false)
+
       if (nTemplate.status == 201 || nTemplate.status == 200) {
         toast.success(nTemplate.message);
         setAdminTemplates(prev => [...(prev || []), nTemplate.data[0]]);
@@ -1088,8 +1107,8 @@ if (step.trigger == 'relation' && !step.linkedStep) {
                   <th className="border px-3 py-2 text-left">Name</th>
                   <th className="border px-3 py-2 text-left">Enabled Users</th>
                   <th className="border px-3 py-2 text-left">Description</th>
+                  <th className="border px-3 py-2 text-left">Categories</th>
                   <th className="border px-3 py-2 text-left">Created At</th>
-                  <th className="border px-3 py-2 text-left">Updated At</th>
                   <th className="border px-3 py-2 text-left">Actions</th>
                 </tr>
               </thead>
@@ -1099,36 +1118,30 @@ if (step.trigger == 'relation' && !step.linkedStep) {
 
                   return (
                     <tr key={t.id}>
-                      <td className="border px-3 py-2 font-semibold capitalize"  >
+                      <td className="border px-3 py-2 font-semibold capitalize w-1/12"  >
                         {t.name}
                       </td>
 
 
 
-                      <td className="border px-3 py-2">
+                      <td className="border px-3 py-2 w-2/12">
                         {t?.enabledUsers?.length == 0 ? "None" : t?.enabledUsers?.map((u) => u.email).join(", ")}
                       </td>
 
-                      <td className="border px-3 py-2">
+                      <td className="border px-3 py-2  w-3/12">
                         {t.description}
                       </td>
-                      <td className="border px-3 py-2">
+                      <td className="border px-3 py-2 w-1/12">
+                        {t.categories.length}
+                      </td>
+                      <td className="border px-3 py-2 w-1/12">
                         {t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "-"}
                       </td>
 
-                      <td className="border px-3 py-2">
-                        {t.updatedAt ? new Date(t.updatedAt).toLocaleDateString() : "-"}
-                      </td>
+                      
 
-                      <td className="border px-3 py-2 space-x-2">
-                        {/* <button
-                className="text-blue-600 underline"
-                onClick={() => onView(t.id)}
-              >
-                View
-              </button>
-
-             */}
+                      <td className="border px-3 py-2 space-x-2 w-2/12">
+                         
                         <Link className="  underline cursor-pointer " href={`${config.FRONTEND_URL}user-tasks/${t.id}`} target="_blank"
                           rel="noopener noreferrer" passHref>
                           Open </Link>
@@ -1241,6 +1254,7 @@ if (step.trigger == 'relation' && !step.linkedStep) {
           </div>
         </div>
       )}
+    {saveTemplateLoading && <FullScreenLoader />}
     </div>
   );
 }
