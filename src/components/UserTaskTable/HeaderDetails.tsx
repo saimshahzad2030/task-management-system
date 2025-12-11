@@ -25,7 +25,7 @@ const HeaderDetails = (arr: ColumnDetails, headerTitle: string) => {
       {!Array.isArray(arr) ?<>
       
            <div className="w-full flex flex-col items-center">
-            <p className="text-sm text-gray-600 mb-2 w-full">{arr.description}</p>
+            <p className="text-sm text-gray-600 mb-2 w-full whitespace-pre-wrap">{arr.description}</p>
            <div className="flex justify-end w-full">
                 <Button
                   size="sm"

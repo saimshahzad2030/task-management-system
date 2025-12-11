@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+
 
 import { AdminTemplate, Categories, ColumnDetails, Step, TaskRow } from "@/global/types";
 // import { adminTemplates as aT } from "@/global/constant";
@@ -292,7 +294,32 @@ export default function AdminTemplates() {
       .length <= 1) return;
     setCategories(prev => prev.filter((_, i) => i !== index));
   };
+function moveUp(index: number) {
+  if (index === 0) return;
+  setSteps(prev => {
+    const copy = [...prev];
+    [copy[index - 1], copy[index]] = [copy[index], copy[index - 1]];
+    return copy;
+  });
+}
 
+function moveDown(index: number) {
+  setSteps(prev => {
+    if (index === prev.length - 1) return prev;
+    const copy = [...prev];
+    [copy[index + 1], copy[index]] = [copy[index], copy[index + 1]];
+    return copy;
+  });
+}
+
+function reorderSteps(fromIndex: number, toIndex: number) {
+  setSteps(prev => {
+    const copy = [...prev];
+    const moved = copy.splice(fromIndex, 1)[0];
+    copy.splice(toIndex, 0, moved);
+    return copy;
+  });
+}
   const saveTemplate = async () => {
     setSaveTemplateLoading(true)
     if (!categories) {
@@ -496,7 +523,7 @@ if (step.trigger == 'relation' && !step.linkedStep) {
       </Button>
 
       {showForm && (
-        <div className="space-y-4 border p-4 rounded ">
+        <div className="space-y-4 border p-4 rounded   "> 
           <ColumnHeaderTable name={templateName} categories={categories} color={color} description={description} steps={steps} data={data} setData={setData} />
           {/* Category Settings */}
           <div className="grid grid-cols-2 gap-3">
@@ -568,17 +595,47 @@ if (step.trigger == 'relation' && !step.linkedStep) {
           </Button>
           {/* Steps Section */}
           <h3 className="font-bold text-md mt-2">Columns</h3>
+<DragDropContext
+  onDragEnd={(result) => {
+    if (!result.destination) return;
+    reorderSteps(result.source.index, result.destination.index);
+  }}
+>
+    <Droppable droppableId="steps">
+       {(provided) => (
+      <div {...provided.droppableProps} ref={provided.innerRef}> 
+{steps.map((step, index) => (
+    <Draggable key={index} draggableId={String(index)} index={index} >
+            {(provided) => (
+            <div key={index}
+               ref={provided.innerRef}
+                {...provided.draggableProps}
+            className="border p-3 rounded-lg bg-gray-200 border border-gray-700 space-y-2 mt-4">
+              <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    {/* DRAG HANDLE */}
+                    <div {...provided.dragHandleProps} className="cursor-move px-2">
+                      ☰
+                    </div>
 
-          {steps.map((step, index) => (
-            <div key={index} className="border p-3 rounded-lg bg-gray-200 space-y-2">
-              <div className="flex justify-between">
-                <span className="font-semibold">Column {index + 1}</span>
-                {steps.length > 1 && (
-                  <Button size="sm" onClick={() => removeStep(index)}>
-                    <X />
-                  </Button>
-                )}
-              </div>
+                    <span className="font-semibold">Column {index + 1}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {/* UP BUTTON */}
+                    <Button size="sm" onClick={() => moveUp(index)}>↑</Button>
+
+                    {/* DOWN BUTTON */}
+                    <Button size="sm" onClick={() => moveDown(index)}>↓</Button>
+
+                    {/* DELETE */}
+                    {steps.length > 1 && (
+                      <Button size="sm" onClick={() => removeStep(index)}>
+                        <X />
+                      </Button>
+                    )}
+                  </div>
+                </div>
 
               <Input
                 placeholder="Column Name"
@@ -1015,21 +1072,29 @@ if (step.trigger == 'relation' && !step.linkedStep) {
                       ))}
                     </>
                   </div> :
+                   <>
+                   
                     <Textarea
                       className="border border-gray-400 bg-white w-auto min-w-6/12"
                       value={step.description}
                       onChange={e => updateStep(index, "columnDetails", { description: e.target.value, copyEnabled: true })}
 
-                    />
-                  }
+                    /> </>
+                       }
 
                 </div>
               )}
 
 
             </div>
+            )}
+          </Draggable>
           ))}
-
+      
+           </div>
+    )}
+  </Droppable> 
+</DragDropContext>
           <Button onClick={addStep} variant="customNormal">
             + Add Column
           </Button>

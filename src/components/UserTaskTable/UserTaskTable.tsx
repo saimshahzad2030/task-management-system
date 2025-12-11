@@ -543,7 +543,7 @@ React.useEffect(() => {
                           <QuestionMark />
                         </button> : <div className="my-4"></div>}
 
-                        <p>{"Check Column"}</p>
+                        <p>{step.name}</p>
                       </div>
                     </th>
 
