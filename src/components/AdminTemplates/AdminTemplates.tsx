@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
-
 import { AdminTemplate, Categories, ColumnDetails, Step, TaskRow } from "@/global/types";
 // import { adminTemplates as aT } from "@/global/constant";
 import ColumnHeaderTable from "./ColumnHeaderTable";
@@ -22,6 +21,7 @@ import { fetchAllUsersService } from "@/services/user.services";
 import { set } from "zod";
 import { QuestionMark } from "@/global/icons";
 import FullScreenLoader from "../Loader/FullScreenLoader";
+import { useAlert } from "../CenteredError/ShowCenteredError";
 
 const showRequiredToast = (title: string, desc: string) => {
   toast.custom((t) => (
@@ -72,6 +72,7 @@ export default function AdminTemplates() {
     setShowForm(false);
   };
 
+  const { showAlert } = useAlert();
 
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -323,30 +324,33 @@ function reorderSteps(fromIndex: number, toIndex: number) {
   const saveTemplate = async () => {
     setSaveTemplateLoading(true)
     if (!categories) {
-      showRequiredToast(
-        "Category Required",
-        "Category name is required for creating a template."
-      );
+      
+      showAlert('Category Required\nCategory name is required for creating a template.','error')
     setSaveTemplateLoading(false)
 
       return;
     }
+if (!templateName.trim()) {
+      showAlert(    "Please enter Template name.",'error')
 
+     
+    setSaveTemplateLoading(false)
+
+      return;
+    }
     if (!description.trim()) {
-      showRequiredToast(
-        "Description Required",
-        "Please enter a template description."
-      );
+      showAlert(    "Please enter Template description.",'error')
+
+     
     setSaveTemplateLoading(false)
 
       return;
     }
 
     if (!color) {
-      showRequiredToast(
-        "Color Required",
-        "Please select a color for the template."
-      );
+      showAlert(    "Please select at least one color for the template.",'error')
+
+     
     setSaveTemplateLoading(false)
 
       return;
@@ -354,29 +358,26 @@ function reorderSteps(fromIndex: number, toIndex: number) {
 
     // Also validate warning/danger colors if needed:
     if (!warningColor) {
-      showRequiredToast(
-        "Warning Color Required",
-        "Please choose a Warning color."
-      );
+      showAlert(    "Please choose a Warning color.",'error')
+
+      
     setSaveTemplateLoading(false)
 
       return;
     }
 
     if (!dangerColor) {
-      showRequiredToast(
-        "Danger Color Required",
-        "Please choose a Danger color."
-      );
+      showAlert(    "Danger Color Required. Please choose a Danger color.",'error')
+
+       
     setSaveTemplateLoading(false)
 
       return;
     }
     if (!steps || !Array.isArray(steps) || steps.length === 0) {
-      showRequiredToast(
-        "Columns Required",
-        "Please add at least one Column to the template."
-      );
+      showAlert(    "Columns Required Please add at least one Column to the template.",'error')
+
+       
     setSaveTemplateLoading(false)
 
       return;
@@ -385,17 +386,18 @@ function reorderSteps(fromIndex: number, toIndex: number) {
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
       if (!step.name || !step.name.trim()) {
-        toast.error(
-          "Column Name Required"
-        );
+         
+        showAlert(`Name Required for column ${i+1}`, "error")
     setSaveTemplateLoading(false)
 
         return;
       }
       if (!step.type || !step.type.trim()) {
-        toast.error(
+      showAlert(    
           `column ${i + 1}: Please select a type`
-        );
+        
+        ,'error')
+ 
     setSaveTemplateLoading(false)
 
         return;
@@ -406,9 +408,11 @@ function reorderSteps(fromIndex: number, toIndex: number) {
 for (let j = 0; j < categories.length; j++) {
 const col = categories[j];
 if (!col.color || !col.name.trim()) {
-   toast.error(
-          `Please Fill the category name for Category ${j + 1} `
-        );
+  showAlert(    
+         `Please Fill the category name for Category ${j + 1} `
+        
+        ,'error')
+ 
     setSaveTemplateLoading(false)
  
 return; 
@@ -419,9 +423,11 @@ return;
 for (let j = 0; j < step.columnDetails.length; j++) {
 const col = step.columnDetails[j];
 if (!col.description || !col.description.trim()) {
-   toast.error(
-          `column ${i + 1}: Please Fill the column details for category ${col.category.name}`
-        );
+  showAlert(    
+         `column ${i + 1}: Please Fill the column details for category ${col.category.name}`
+        
+        ,'error')
+    
     setSaveTemplateLoading(false)
  
 return; 
@@ -429,9 +435,11 @@ return;
 }
 }
 if (step.trigger == 'relation' && !step.linkedStep) {
-        toast.error(
-          `column ${i + 1}: Please Specify Related Step`
-        );
+       
+         showAlert(    
+                 `column ${i + 1}: Please Specify Related Step`
+        
+        ,'error')
     setSaveTemplateLoading(false)
 
         return;
