@@ -50,7 +50,7 @@ export const CustomAlertProvider = ({ children }: { children: ReactNode }) => {
           <div
             className={`bg-white p-6 rounded-md shadow-xl w-[350px] border ${typeColors[alert.type]}`}
           >
-            <p className={`font-semibold text-base ${typeColors[alert.type]}`}>
+            <p className={`font-semibold text-base  text-gray-500`}>
               {alert.message}
             </p>
 
@@ -61,7 +61,7 @@ export const CustomAlertProvider = ({ children }: { children: ReactNode }) => {
                 variant="outline"
                 className={typeColors[alert.type]}
               >
-                Close
+                {alert.type == 'success' || alert.type == 'info'?'Ok':'Close'}
               </Button>
             </div>
           </div>

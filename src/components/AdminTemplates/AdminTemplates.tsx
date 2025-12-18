@@ -57,7 +57,7 @@ export default function AdminTemplates() {
         trigger: "completed",
         info: "",
         popupDescription: "",
-        columnDetails: [],
+        columnDetails: {description:"",copyEnabled:true},
         linkedStep: null,
       },
     ]);
@@ -79,8 +79,7 @@ export default function AdminTemplates() {
 
 
 
-  const [editingTemplate, setEditingTemplate] = useState<AdminTemplate | null>(null);
-  const [columnDetails, setColumnDetails] = useState<ColumnDetails>([])
+  const [editingTemplate, setEditingTemplate] = useState<AdminTemplate | null>(null); 
   const [usersToAssign, setUsersToAssign] = useState<{
     id: number,
     username: string,
@@ -117,11 +116,10 @@ export default function AdminTemplates() {
 
   const handleEditTemplate = (tmpl: AdminTemplate) => {
     setEditingTemplate(tmpl);
-    setTemplateName(tmpl.name)
-    // Pre-fill form fields
+    setTemplateName(tmpl.name) 
     setCategories(tmpl.categories);
     setDescription(tmpl.description);
-
+    console.log(tmpl,"tmpl")
     setSteps(tmpl.steps);
 
     setShowForm(true);
@@ -183,7 +181,7 @@ export default function AdminTemplates() {
         },
 
         popupDescription: null,
-        columnDetails: [],
+        columnDetails: {description:'',copyEnabled:true},
         linkedStep: null
       },
     ]);
@@ -462,13 +460,14 @@ if (step.trigger == 'relation' && !step.linkedStep) {
     setSaveTemplateLoading(false)
 
       if (nTemplate.status == 201 || nTemplate.status == 200) {
-        toast.success(nTemplate.message);
+        // toast.success(nTemplate.message);
         setAdminTemplates(prev =>
           prev?.map(t => (t.id === editingTemplate.id ? nTemplate.data : t))
         );
+      showAlert('Template Saved and Updated','success')
 
-        setData(null)
-        resetForm();
+        // setData(null)
+        // resetForm();
       }
       else {
         toast.error(nTemplate.message);
@@ -489,15 +488,18 @@ if (step.trigger == 'relation' && !step.linkedStep) {
         createdAt: new Date(),
         updatedAt: new Date()
       };
+      console.log(newTemplate,"New one")
       let nTemplate = await createAdminTemplate(newTemplate)
 
           setSaveTemplateLoading(false)
 
       if (nTemplate.status == 201 || nTemplate.status == 200) {
-        toast.success(nTemplate.message);
+        // toast.success(nTemplate.message);
         setAdminTemplates(prev => [...(prev || []), nTemplate.data[0]]);
-        setData(null)
-        resetForm();
+      showAlert('Template Saved and Updated','success')
+        setEditingTemplate(nTemplate.data[0])
+        // setData(null)
+        // resetForm();
       }
       else {
         toast.error(nTemplate.message);
@@ -516,6 +518,11 @@ if (step.trigger == 'relation' && !step.linkedStep) {
     }
     fetchTemplates()
   }, [])
+const isSingleColumnDetail = (
+  value: ColumnDetails | undefined
+): value is { description: string; copyEnabled: boolean } => {
+  return !!value && !Array.isArray(value);
+};
 
   return (
     <div className="border rounded-lg p-4 bg-white space-y-4 w-full">
@@ -527,12 +534,11 @@ if (step.trigger == 'relation' && !step.linkedStep) {
         setShowForm(!showForm)
         setTemplateName(``)
       }}>
-        {showForm ? "Close Builder" : "Create New Template"}
+        {showForm ? "Back to Templates" : "Create New Template"}
       </Button>
 
       {showForm && (
         <div className="space-y-4 border p-4 rounded   "> 
-          <ColumnHeaderTable name={templateName} categories={categories} color={color} description={description} steps={steps} data={data} setData={setData} />
           {/* Category Settings */}
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-md bg-gray-200 p-4">
@@ -1080,11 +1086,14 @@ if (step.trigger == 'relation' && !step.linkedStep) {
                       ))}
                     </>
                   </div> :
-                   <>
-                   
+                   <> 
                     <Textarea
                       className="border border-gray-400 bg-white w-auto min-w-6/12"
-                      value={step.description}
+                       value={
+    isSingleColumnDetail(step.columnDetails)
+      ? step.columnDetails.description
+      : ""
+  }
                       onChange={e => updateStep(index, "columnDetails", { description: e.target.value, copyEnabled: true })}
 
                     /> </>
@@ -1107,16 +1116,14 @@ if (step.trigger == 'relation' && !step.linkedStep) {
             + Add Column
           </Button>
 
-          <div className="flex flex-col items-center w-full">
-            <Button className="cursor-pointer mt-3" variant="outline" onClick={saveTemplate}>
-              {editingTemplate ? "Update Template" : "Save Template"}
-            </Button>
-          </div>
+         
+          <ColumnHeaderTable name={templateName} saveTemplate={saveTemplate} categories={categories} color={color} description={description} steps={steps} data={data} setData={setData} />
+
         </div>
       )}
 
 
-      <div>
+      {!showForm && <div>
         <h3 className="font-bold">Existing Templates</h3>
 
         {templateFetchLoading ?
@@ -1252,7 +1259,7 @@ if (step.trigger == 'relation' && !step.linkedStep) {
           }</>}
 
 
-      </div>
+      </div>}
 
       {showUserModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -1311,10 +1318,8 @@ if (step.trigger == 'relation' && !step.linkedStep) {
                     toast.success(allowAccess.message || "Access granted to user successfully");
                   } else {
                     toast.error(allowAccess.message || "Failed to grant access to user");
-                  }
-                  // const user = usersToAssign.find((u) => u.id.toString() === selectedUserId);
-
-                  // console.log("Selected User:", user);
+                  } 
+ 
 
                   setUsersToAssignFinalLoading(false)
 

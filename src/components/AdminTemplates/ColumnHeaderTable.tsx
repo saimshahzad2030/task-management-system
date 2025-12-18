@@ -20,8 +20,9 @@ export interface ColumnHeaderTableProps {
   data: TaskRow | null;
   setData: React.Dispatch<React.SetStateAction<TaskRow | null>>;
   steps: Step[];
+  saveTemplate:()=>void
 }
-const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({ categories, name, color, description, steps, data, setData }) => {
+const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({saveTemplate, categories, name, color, description, steps, data, setData }) => {
 
   const [columns, setColumns] = useState([
     { id: "col1", label: "COLUMN 1" },
@@ -53,9 +54,15 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({ categories, name,
 
   return (
     <div className="flex flex-col items-center">
-      <div className="flex flex-row items-center justify-end w-full">
-        {steps.length > 0 && steps.every((s) => s.name) && <Button
-          className="my-4 cursor-pointer"
+      <div className="flex flex-row items-center justify-center w-full">
+        {<> 
+        <Button className="cursor-pointer m-4" variant="outline" onClick={saveTemplate}> 
+                      {"Save Template"}
+                    </Button>
+        {steps.length > 0 && steps.every((s) => s.name) && <>
+             
+        <Button
+          className="m-4 cursor-pointer"
           onClick={() => {
             const template: AdminTemplate = {
               id: "tmp_" + Date.now(),
@@ -132,7 +139,10 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({ categories, name,
 
             setData(newTask); // this triggers table render
           }}
-        >{data ? "Refresh preview" : "Preview"}</Button>}
+        >{data ? "Refresh preview" : "Preview"}</Button>
+        
+        </>}
+        </>}
       </div>
       {data && <div className="w-full overflow-x-auto">
         <table className={`  table-auto border-collapse border w-full ${roboto.className}`}>
@@ -394,7 +404,7 @@ const ColumnHeaderTable: React.FC<ColumnHeaderTableProps> = ({ categories, name,
                         <Tooltip>
                           {/* ✅ MOVE TooltipTrigger TO THIS DIV */}
                           <TooltipTrigger asChild>
-                           <div className="relative flex flex-col justify-center items-center w-full min-h-[40px]">
+                            <div className="relative flex flex-col justify-center items-center w-full min-h-[40px]">
                               <div
                                 onClick={() => {
                                   // setData(prev => {

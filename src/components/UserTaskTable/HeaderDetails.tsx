@@ -54,9 +54,27 @@ const HeaderDetails = (arr: ColumnDetails, headerTitle: string) => {
             }}
           >
             {arr.map((tab, index) => (
-              <TabsTrigger className={`${arr.length == 1 && "w-[200px]"}`} key={tab.category.name} value={tab.category.name} style={{ backgroundColor: arr[index].category.color, color: "white" }}>
-                {tab.category.name}
-              </TabsTrigger>
+            <TabsTrigger
+  key={tab.category.name}
+  value={tab.category.name}
+  className={`
+    transition-all
+    text-white
+    border-2 border-transparent
+    opacity-50
+    hover:opacity-100
+
+    data-[state=active]:opacity-100
+    data-[state=active]:border-black
+    data-[state=active]:scale-[1.05]
+    data-[state=active]:shadow-md
+  `}
+  style={{
+    backgroundColor: tab.category.color,
+  }}
+>
+  {tab.category.name}
+</TabsTrigger>
             ))}
           </TabsList></>}
 
@@ -73,7 +91,7 @@ const HeaderDetails = (arr: ColumnDetails, headerTitle: string) => {
                   onClick={() => {
                     navigator.clipboard.writeText(tab.description);
                     toast.success("Copied to clipboard!");
-                    toast.dismiss(t)
+                    // toast.dismiss(t)
                   }}
                 >
                   Copy
@@ -88,8 +106,8 @@ const HeaderDetails = (arr: ColumnDetails, headerTitle: string) => {
   ),
     {
       position: "top-center", // 👈 only this toast appears at the top center
-      duration: 6000, // optional: auto close after 6s
-      dismissible: true, // allow click to dismiss
+      duration: Infinity,   // ✅ stays forever
+    dismissible: false, 
     });
 };
 

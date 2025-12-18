@@ -502,7 +502,7 @@ React.useEffect(() => {
 
                 <tr className=" overflow-y-visible ">
                   {/* Task Line Checkbox */}
-                  <th className="px-1 h-[20px]  text-center  text-[11px] sticky left-[-2]  bg-gray-100  pt-8 ">
+                  <th className="px-1 h-[20px]  text-center  text-[9px] sticky left-[-2]  bg-gray-100  pt-8 ">
 
                   </th>
                   {/* <th
@@ -515,7 +515,7 @@ React.useEffect(() => {
                   {adminTemplate.steps.filter((s)=>{return s.type!=='check'}).map((step) => (
                     <th
                       key={step.id}
-                      className="   min-w-[70px]  text-[11px] px-4 text-center pt-8  "
+                      className="   min-w-[70px]  text-[9px] px-4 text-center pt-8  "
                     >
                       {step.name.toUpperCase()}
                     </th>
@@ -530,9 +530,9 @@ React.useEffect(() => {
                   {adminTemplate.steps.filter((s)=>{return s.type=='check'}).map((step, index) => (
                     <th
                       key={step.id}
-                      className="cursor-pointer px-4 h-[50px] min-w-[120px] text-center text-[11px]"
+                      className="cursor-pointer px-1 h-[50px] min-w-[80px] text-center text-[9px]  "
                     >
-                      <div className="w-full flex flex-col items-center">
+                      <div className="w-full flex flex-col items-center ">
                         {step.columnDetails ? <button
                           className="my-2 cursor-pointer"
                           onClick={() => {console.log(step.columnDetails) 
@@ -770,13 +770,12 @@ React.useEffect(() => {
                                 }
                               }}
 
-                              className={`    text-center     w-[80px] h-[9px] 
+                              className={`    text-center  w-[120px] h-[9px] 
                   ${row.taskLineChecked && "bg-red-600"}
                   `}
                             >
                               <TooltipProvider>
-                                <Tooltip>
-                                  {/* ✅ MOVE TooltipTrigger TO THIS DIV */}
+                                <Tooltip> 
                                   <TooltipTrigger asChild>
                                     <div className={`relative flex flex-col justify-center items-center w-full min-h-[40px]
         
@@ -801,9 +800,9 @@ React.useEffect(() => {
                                         }}
 
 
-                                        className={`relative flex flex-col items-center justify-center w-8/12 min-h-[40px] ${row.taskLineChecked ? "bg-red-600" : step ? step.completed ? "bg-lime-500"
+                                        className={`relative flex flex-col items-center justify-center w-[98.5%] min-h-[40px] ${row.taskLineChecked ? "bg-red-600" : step ? step.completed ? "bg-lime-500"
                                           : step.markedNext ? "bg-yellow-300"
-                                            : step.markedNextRed ? "bg-red-200" : "bg-gray-200" : ""}`}>
+                                            : step.markedNextRed ? "bg-red-200" : "bg-gray-400" : ""}`}>
                                         {/* Notes icon */}
                                         {step?.notes && (
                                           <div className="absolute flex flex-row items-center justify-end top-0 right-0">
