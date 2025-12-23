@@ -165,7 +165,7 @@ export const sampleData: TaskRow[] = [
         }
       },
       { id: 3, columnId: 3, name: "Prepare Documentation", completed: false, description: "Upload customer documents.", triggerType: "completed" },
-      { id: 4, columnId: 4, name: "Perform Diagnostics", completed: false, description: "Diagnostics required before moving ahead.", triggerType: "popup", popup: { description: "Diagnostic alert." } },
+      { id: 4, columnId: 4, name: "Perform Diagnostics", completed: false, description: "Diagnostics required before moving ahead.", triggerType: "popup", popupDescription: "Diagnostic alert."  },
       { id: 5, columnId: 5, name: "Supervisor Approval", completed: false, description: "Supervisor must review and approve.", triggerType: "completed" },
       { id: 6, columnId: 6, name: "Parts Quality Check", completed: false, description: "Check parts quality.", triggerType: "completed" },
       { id: 7, columnId: 7, name: "Assign Work Order", completed: false, description: "Assign work order number.", triggerType: "completed" },
@@ -198,7 +198,7 @@ export const sampleData: TaskRow[] = [
           category: { color: "#13f80bff", name: "cat-2", id: 2 }
         }], completed: false, description: "Collected service request.", triggerType: "completed"
       },
-      { id: 2, columnId: 2, name: "Critical Maintenance", completed: false, description: "Do maintenance before deadline.", triggerType: "popup", popup: { description: "Maintenance due soon." } },
+      { id: 2, columnId: 2, name: "Critical Maintenance", completed: false, description: "Do maintenance before deadline.", triggerType: "popup", popupDescription: "Maintenance due soon." }  ,
       { id: 3, columnId: 3, name: "Safety Review", completed: false, description: "Safety checklist required.", triggerType: "completed" },
       { id: 4, columnId: 4, name: "Assign Technician", completed: false, description: "Assign technician.", triggerType: "completed" },
       { id: 5, columnId: 5, name: "Final QA Submission", completed: false, description: "Final QA submission required.", triggerType: "popup" },

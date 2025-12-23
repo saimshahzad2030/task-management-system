@@ -42,6 +42,7 @@ import { UserTaskHeaderProps } from "@/global/componentTypes";
 import { convertAdminTemplateToTaskData } from "@/utils/convertIntoUserTasks";
 import { ConfirmModal } from "./ConfirmModal";
 import { set } from "zod";
+import { useAlert } from "../CenteredError/ShowCenteredError";
  export async function clearAllBrowserStorage() {
   try {
     // Clear localStorage
@@ -67,17 +68,24 @@ import { set } from "zod";
 
 
 const UserTaskTable = ({ adminTemplate }: UserTaskHeaderProps) => {
+    const { showAlert } = useAlert();
+  
  const handleClearCache = async () => {
-  const success = await clearAllBrowserStorage();
+    showAlert("Are your sure? This will delete all the task lines", 'warning',
+
+        async() => {const success = await clearAllBrowserStorage();
   if (success) {
      const fresh = [convertAdminTemplateToTaskData(adminTemplate)];
 
     setData(fresh);
+    console.log(fresh,"fresh")
     setLastSavedData(JSON.parse(JSON.stringify(fresh)));
     toast.success("All cache/storage cleared!");
   } else {
     toast.error("Failed to clear storage.");
-  }
+  }}
+      )
+  
 };
 
 
@@ -259,25 +267,9 @@ const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
     // ✅ Trigger: popup
     // =========================================
     if (step.triggerType === "popup") {
-      toast.custom(
-        (t) => (
-          <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[320px]">
-            <p className="text-gray-800 text-sm mb-3">
-              {step.popup?.description || "Please confirm this action."}
-            </p>
+      showAlert(step.popupDescription || "Please confirm this action.", 'success',
 
-            <div className="flex justify-end space-x-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => toast.dismiss(t)}
-              >
-                Cancel
-              </Button>
-
-              <Button
-                size="sm"
-                onClick={() => {
+        () => {
                   setData(prev => {
                     const updated = [...prev];
 
@@ -293,22 +285,61 @@ const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
 
                     return updated;
                   });
-
-                  toast.dismiss(t);
+ 
                   toast.success("Step marked as completed!");
-                }}
-              >
-                OK
-              </Button>
-            </div>
-          </div>
-        ),
-        {
-          position: "top-center",
-          duration: 6000,
-          dismissible: true,
-        }
-      );
+                }
+      )
+
+      // toast.custom(
+      //   (t) => (
+      //     <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[320px]">
+      //       <p className="text-gray-800 text-sm mb-3">
+      //         {step.popupDescription || "Please confirm this action."}
+      //       </p>
+
+      //       <div className="flex justify-end space-x-2">
+      //         <Button
+      //           size="sm"
+      //           variant="outline"
+      //           onClick={() => toast.dismiss(t)}
+      //         >
+      //           Cancel
+      //         </Button>
+
+      //         <Button
+      //           size="sm"
+      //           onClick={() => {
+      //             setData(prev => {
+      //               const updated = [...prev];
+
+      //               let newSteps = updated[rowIndex].steps.map(s =>
+      //                 s.name === stepName ? { ...s, completed: true } : s
+      //               );
+
+      //               const clickedIndex = updated[rowIndex].steps.findIndex(
+      //                 s => s.name === stepName
+      //               );
+
+      //               updated[rowIndex].steps = applyMarkedNextRed(newSteps, clickedIndex);
+
+      //               return updated;
+      //             });
+
+      //             toast.dismiss(t);
+      //             toast.success("Step marked as completed!");
+      //           }}
+      //         >
+      //           OK
+      //         </Button>
+      //       </div>
+      //     </div>
+      //   ),
+      //   {
+      //     position: "top-center",
+      //     duration: 6000,
+      //     dismissible: true,
+      //   }
+      // );
       return;
     }
 
@@ -459,6 +490,7 @@ React.useEffect(() => {
 
   // Otherwise → generate fresh data for this template
   const fresh = [convertAdminTemplateToTaskData(adminTemplate)];
+  console.log(fresh,"fresh")
   setData(fresh);
   setLastSavedData(JSON.parse(JSON.stringify(fresh)));
 }, []);
@@ -515,7 +547,7 @@ React.useEffect(() => {
                   {adminTemplate.steps.filter((s)=>{return s.type!=='check'}).map((step) => (
                     <th
                       key={step.id}
-                      className="   min-w-[70px]  text-[9px] px-4 text-center pt-8  "
+                      className="   min-w-[40px]  max-w-[50px] text-[9px] px-4 text-center pt-8  "
                     >
                       {step.name.toUpperCase()}
                     </th>
@@ -535,8 +567,22 @@ React.useEffect(() => {
                       <div className="w-full flex flex-col items-center ">
                         {step.columnDetails ? <button
                           className="my-2 cursor-pointer"
-                          onClick={() => {console.log(step.columnDetails) 
-                            HeaderDetails(step.columnDetails as ColumnDetails, step.name)}}
+                          onClick={() => { 
+                            HeaderDetails(Array.isArray(step.columnDetails)
+  ? (() => {
+      const filtered = step.columnDetails.filter(
+        item => item.description?.trim() !== ""
+      );
+      console.log("filtered",filtered)
+      if (filtered.length == 1) {
+          return filtered[0]? {description:filtered[0]?.description,copyEnabled:true} : step.columnDetails;
+      }
+      if (filtered.length == 0){
+        return step.columnDetails
+      }
+      return filtered;
+    })()
+  : step.columnDetails as ColumnDetails, step.name)}}
 
                         >
 
@@ -612,10 +658,10 @@ React.useEffect(() => {
                                   ? "white"
                                   : index === 0  
                                     ?  getContrastText(row.color) 
-                                    : "#1e2939",
+                                    : "#1e2939", 
                               }}
 
-                              className={`text-center min-w-[140px]  whitespace-nowrap `}
+                              className={`text-center min-w-[40px]   whitespace-nowrap `}
                             >
                               {colObj ? (
                                 colObj.type === "text" ? (
@@ -623,7 +669,7 @@ React.useEffect(() => {
                                     type="text"
                                     placeholder="Enter text..."
 
-                                    className="text-center bg-transparent placeholder:italic focus:outline-none text-xs"
+                                    className="p-1 text-center bg-transparent placeholder:italic focus:outline-none text-xs"
                                     value={colObj.value || ""}
                                     onChange={(e) => {
                                       const newValue = e.target.value;
@@ -673,7 +719,7 @@ React.useEffect(() => {
                                 return (
                                   <div
                                     className={cn(
-                                      "w-full text-xs text-center py-2 bg-transparent focus:outline-none cursor-pointer rounded-md italic"
+                                      "w-full text-xs text-center py-1 bg-transparent focus:outline-none cursor-pointer rounded-md italic "
                                     )}
 
                                   >
@@ -777,7 +823,7 @@ React.useEffect(() => {
                               <TooltipProvider>
                                 <Tooltip> 
                                   <TooltipTrigger asChild>
-                                    <div className={`relative flex flex-col justify-center items-center w-full min-h-[40px]
+                                    <div className={`relative bg-gray-100 flex flex-col justify-center items-center w-full min-h-[25px]
         
          `}
                                     >
@@ -800,9 +846,9 @@ React.useEffect(() => {
                                         }}
 
 
-                                        className={`relative flex flex-col items-center justify-center w-[98.5%] min-h-[40px] ${row.taskLineChecked ? "bg-red-600" : step ? step.completed ? "bg-lime-500"
+                                        className={`relative flex flex-col items-center justify-center w-[98.5%] min-h-[25px] ${row.taskLineChecked ? "bg-red-600" : step ? step.completed ? "bg-lime-500"
                                           : step.markedNext ? "bg-yellow-300"
-                                            : step.markedNextRed ? "bg-red-200" : "bg-gray-400" : ""}`}>
+                                            : step.markedNextRed ? "bg-red-200" : "bg-white" : ""}`}>
                                         {/* Notes icon */}
                                         {step?.notes && (
                                           <div className="absolute flex flex-row items-center justify-end top-0 right-0">

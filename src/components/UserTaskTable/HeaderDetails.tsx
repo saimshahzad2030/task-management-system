@@ -8,10 +8,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { ColumnDetails } from "@/global/types";
- 
+ import getContrastText from "@/utils/getContrast";
 
 const HeaderDetails = (arr: ColumnDetails, headerTitle: string) => {
-
+console.log(arr)
   return toast.custom((t) => (
     <div className="p-3 bg-white border border-gray-200 rounded-md shadow-md min-w-[300px] pt-8">
       <button
@@ -71,6 +71,7 @@ const HeaderDetails = (arr: ColumnDetails, headerTitle: string) => {
   `}
   style={{
     backgroundColor: tab.category.color,
+    color:getContrastText(tab.category.color)
   }}
 >
   {tab.category.name}

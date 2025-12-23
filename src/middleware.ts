@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server';
 import { config as con } from '../config/config';
 import axiosInstance, { axiosInstanceJson } from '../axios/axiosInstance';
 import axios from 'axios';
-const adminProtectedRoutes = ['/admin-templates/:path*']; 
+const adminProtectedRoutes = ['/admin-templates/:path*','/admin-templates']; 
 const userProtectedRoutes = ['/user-tasks/:path*']; 
 export async function middleware(req: NextRequest, res: NextResponse) {
 try {

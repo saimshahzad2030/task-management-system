@@ -56,7 +56,21 @@ export const convertAdminTemplateToTaskData = (template: AdminTemplate): TaskRow
           : undefined,
 
 
-        columnDetails: step.columnDetails ?? undefined,
+        columnDetails: Array.isArray(step.columnDetails)
+  ? (() => {
+      const filtered = step.columnDetails.filter(
+        item => item.description?.trim() !== ""
+      );
+      console.log("filtered",filtered)
+      if (filtered.length == 1) {
+          return filtered[0]? {description:filtered[0]?.description,copyEnabled:true} : undefined;
+      }
+      if (filtered.length == 0){
+        return undefined
+      }
+      return filtered;
+    })()
+  : step.columnDetails,
       })),
 
     statusTL: false,

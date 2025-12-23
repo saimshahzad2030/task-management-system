@@ -55,7 +55,8 @@ export interface ListStep {
     notes?:string; 
     description: string;
     triggerType:"popup" | "relation" | "completed"
-    popup?:{description:string}
+      popupDescription?:string | null
+
     linkedStep?:{id:number,
        notes?:string,
      
