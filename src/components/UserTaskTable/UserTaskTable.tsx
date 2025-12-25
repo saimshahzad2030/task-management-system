@@ -11,7 +11,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDetails, FinalColumnKey, ListStep, NotesPopupState, TaskRow } from "@/global/types";
 import { sampleData as initialData } from "@/global/constant";
-import {  finalColumns } from "@/global/constant";
+import { finalColumns } from "@/global/constant";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { toast } from "sonner";
 import AddTaskLine from "./AddTaskLine";
@@ -43,7 +43,7 @@ import { convertAdminTemplateToTaskData } from "@/utils/convertIntoUserTasks";
 import { ConfirmModal } from "./ConfirmModal";
 import { set } from "zod";
 import { useAlert } from "../CenteredError/ShowCenteredError";
- export async function clearAllBrowserStorage() {
+export async function clearAllBrowserStorage() {
   try {
     // Clear localStorage
     localStorage.clear();
@@ -68,43 +68,45 @@ import { useAlert } from "../CenteredError/ShowCenteredError";
 
 
 const UserTaskTable = ({ adminTemplate }: UserTaskHeaderProps) => {
-    const { showAlert } = useAlert();
-  
- const handleClearCache = async () => {
+  const { showAlert } = useAlert();
+
+  const handleClearCache = async () => {
     showAlert("Are your sure? This will delete all the task lines", 'warning',
 
-        async() => {const success = await clearAllBrowserStorage();
-  if (success) {
-     const fresh = [convertAdminTemplateToTaskData(adminTemplate)];
+      async () => {
+        const success = await clearAllBrowserStorage();
+        if (success) {
+          const fresh = [convertAdminTemplateToTaskData(adminTemplate)];
 
-    setData(fresh);
-    console.log(fresh,"fresh")
-    setLastSavedData(JSON.parse(JSON.stringify(fresh)));
-    toast.success("All cache/storage cleared!");
-  } else {
-    toast.error("Failed to clear storage.");
-  }}
-      )
-  
-};
+          setData(fresh);
+          console.log(fresh, "fresh")
+          setLastSavedData(JSON.parse(JSON.stringify(fresh)));
+          toast.success("All cache/storage cleared!");
+        } else {
+          toast.error("Failed to clear storage.");
+        }
+      }
+    )
+
+  };
 
 
   const saveToLocalStorage = () => {
-  try { 
+    try {
 
-    const cloned = JSON.parse(JSON.stringify(data)); // DEEP CLONE
+      const cloned = JSON.parse(JSON.stringify(data)); // DEEP CLONE
 
-    localStorage.setItem(`user-task-data-${adminTemplate.id}`, JSON.stringify(cloned));
-    setLastSavedData(cloned); // store clean snapshot
-    toast.success("Changes saved!");
-  } catch (err) {
-    toast.error("Failed to save data");
-  }
-};
+      localStorage.setItem(`user-task-data-${adminTemplate.id}`, JSON.stringify(cloned));
+      setLastSavedData(cloned); // store clean snapshot
+      toast.success("Changes saved!");
+    } catch (err) {
+      toast.error("Failed to save data");
+    }
+  };
   // const [data, setData] = useState([convertAdminTemplateToTaskData(adminTemplate)]);
   const [data, setData] = useState([convertAdminTemplateToTaskData(adminTemplate)]);
-const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
- 
+  const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
+
   const [open, setOpen] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [notesPopup, setNotesPopup] = useState<NotesPopupState>({
@@ -187,26 +189,42 @@ const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
   const stepColumns = data[0]?.steps.map((s: any) => s.name) || [];
 
 
-  function applyMarkedNextRed(steps: ListStep[], clickedIndex: number) {
-    // find all completed steps
-    const brokenRange: number[] = [];
-    for (let i = 0; i < clickedIndex; i++) {
-      if (!steps[i].completed) brokenRange.push(i);
-    }
+  // function applyMarkedNextRed(steps: ListStep[], clickedIndex: number) {
+  //   // find all completed steps
+  //   const brokenRange: number[] = [];
+  //   for (let i = 0; i < clickedIndex; i++) {
+  //     if (!steps[i].completed) brokenRange.push(i);
+  //   }
 
-    // 2️⃣ Find next uncompleted step AFTER clickedIndex
-    const next = steps.findIndex((s, i) => i > clickedIndex && !s.completed);
+  //   // 2️⃣ Find next uncompleted step AFTER clickedIndex
+  //   const next = steps.findIndex((s, i) => i > clickedIndex && !s.completed);
 
-    return steps.map((s, i) => ({
-      ...s,
+  //   return steps.map((s, i) => ({
+  //     ...s,
 
-      // keep old red unless the step is now completed
-      markedNextRed:
-        s.completed
-          ? false
-          : s.markedNextRed || brokenRange.includes(i) || i === next
-    }));
-  }
+  //     // keep old red unless the step is now completed
+  //     markedNextRed:
+  //       s.completed
+  //         ? false
+  //         : s.markedNextRed || brokenRange.includes(i) || i === next
+  //   }));
+  // }
+ 
+function applyMarkedNextRed(steps: ListStep[],clickedIndex:number): ListStep[] {
+  return steps.map((step, i) => {
+    const prevCompleted = i > 0 && steps[i - 1].completed;
+    const nextCompleted = i < steps.length - 1 && steps[i + 1].completed;
+
+    return {
+      ...step,
+      // a completed step itself is never red
+      markedNextRed: !step.completed && (prevCompleted || nextCompleted),
+    };
+  });
+}
+
+ 
+
   const handleCheckbox = (
     rowIndex: number,
     stepName: string,
@@ -218,22 +236,40 @@ const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
     // =========================================
     // ✅ IF UNCHECKING — show confirmation
     // =========================================
-   if (step.completed) {
+//    if (step.completed) {
+//   setData(prev => {
+//     const updated = [...prev];
+//     const steps = [...updated[rowIndex].steps];
+
+//     // 1️⃣ Uncheck the clicked step
+//     const uncheckedSteps = steps.map(s =>
+//       s.name === stepName ? { ...s, completed: false } : s
+//     );
+
+//     // 2️⃣ Recalculate markedNextRed properly
+//     const recalculatedSteps = uncheckedSteps.map((s, idx) => ({
+//       ...s,
+//       markedNextRed:
+//         idx > 0 && uncheckedSteps[idx - 1].completed === true,
+//     }));
+
+//     updated[rowIndex].steps = recalculatedSteps;
+//     return updated;
+//   });
+
+//   return;
+// }
+if (step.completed) {
   setData(prev => {
     const updated = [...prev];
 
-    // reset all markedNextRed to false on uncheck
-    const resetSteps = updated[rowIndex].steps.map(s => ({
-      ...s,
-      markedNextRed: false
-    }));
-
-    // now uncheck the clicked step
-    const newSteps = resetSteps.map(s =>
-      s.name === stepName ? { ...s, completed: false } : s
+    const steps = updated[rowIndex].steps.map(s =>
+      s.name === stepName
+        ? { ...s, completed: false }
+        : { ...s }
     );
 
-    updated[rowIndex].steps = newSteps;
+    updated[rowIndex].steps = applyMarkedNextRed(steps,2);
     return updated;
   });
 
@@ -255,7 +291,7 @@ const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
         const clickedIndex = updated[rowIndex].steps.findIndex(
           s => s.name === stepName
         );
-
+        console.log(clickedIndex,"clickedIndex")
         updated[rowIndex].steps = applyMarkedNextRed(newSteps, clickedIndex);
         return updated;
       });
@@ -270,24 +306,24 @@ const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
       showAlert(step.popupDescription || "Please confirm this action.", 'success',
 
         () => {
-                  setData(prev => {
-                    const updated = [...prev];
+          setData(prev => {
+            const updated = [...prev];
 
-                    let newSteps = updated[rowIndex].steps.map(s =>
-                      s.name === stepName ? { ...s, completed: true } : s
-                    );
+            let newSteps = updated[rowIndex].steps.map(s =>
+              s.name === stepName ? { ...s, completed: true } : s
+            );
 
-                    const clickedIndex = updated[rowIndex].steps.findIndex(
-                      s => s.name === stepName
-                    );
+            const clickedIndex = updated[rowIndex].steps.findIndex(
+              s => s.name === stepName
+            );
 
-                    updated[rowIndex].steps = applyMarkedNextRed(newSteps, clickedIndex);
+            updated[rowIndex].steps = applyMarkedNextRed(newSteps, clickedIndex);
 
-                    return updated;
-                  });
- 
-                  toast.success("Step marked as completed!");
-                }
+            return updated;
+          });
+
+          toast.success("Step marked as completed!");
+        }
       )
 
       // toast.custom(
@@ -357,8 +393,7 @@ const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
             return (
               <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-md w-[330px]">
                 <p className="text-gray-800 text-sm mb-3">
-                  You just finished this column. Mark what is needed for the next
-                  column:
+                  Please select the sublets required for this repair
                 </p>
 
                 <div className="space-y-2 max-h-[140px] overflow-y-auto mb-3 pr-1">
@@ -371,7 +406,7 @@ const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
                         {fc.description}
                       </span>
                       <Switch
-                        checked={fc.needed}
+                        checked={fc.needed === true || fc.needed === "true"}
                         onCheckedChange={(val) => {
                           const copy = [...state];
                           copy[i] = { ...copy[i], needed: val };
@@ -400,7 +435,7 @@ const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
 
                           // update current steps
                           let updatedSteps = row.steps.map(s => {
-                            if (s.name === stepName) {
+                            if (s.name === stepName) { 
                               return {
                                 ...s,
                                 completed: true,
@@ -410,9 +445,14 @@ const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
                                 },
                               };
                             }
+                         
                             if (step?.linkedStep && step.linkedStep.id == s.columnId) {
-                       console.log(step.linkedStep.notes,"step")
-                              return { ...s, markedNext: true,notes: step.linkedStep.notes || ""  };
+                               const notesFromFutureColumnThings =
+                                state
+                                  ?.filter(item => item.needed === true || item.needed === "true")
+                                  .map(item => item.description)
+                                  .join("\n") || ""; 
+                              return { ...s, markedNext: true, notes:notesFromFutureColumnThings || ""  };
                             }
 
 
@@ -452,8 +492,8 @@ const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
     }
   };
   const [modalOpen, setModalOpen] = useState(false);
-    const [selectedRow, setSelectedRow] = useState<number | null>(null);
-    const [selectedCol, setSelectedCol] = useState<FinalColumnKey | null>(null);
+  const [selectedRow, setSelectedRow] = useState<number | null>(null);
+  const [selectedCol, setSelectedCol] = useState<FinalColumnKey | null>(null);
   const handleFinalCheckbox = (
     rowIndex: number,
     col: FinalColumnKey,
@@ -479,25 +519,25 @@ const [lastSavedData, setLastSavedData] = useState<TaskRow[] | null>(null);
       return updated;
     });
   };
-React.useEffect(() => {
+  React.useEffect(() => {
     const saved = localStorage.getItem(`user-task-data-${adminTemplate.id}`);
-  if (saved) {
-    const parsed = JSON.parse(saved);
-    setData(parsed);
-    setLastSavedData(JSON.parse(JSON.stringify(parsed)));
-    return;
-  }
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setData(parsed);
+      setLastSavedData(JSON.parse(JSON.stringify(parsed)));
+      return;
+    }
 
-  // Otherwise → generate fresh data for this template
-  const fresh = [convertAdminTemplateToTaskData(adminTemplate)];
-  console.log(fresh,"fresh")
-  setData(fresh);
-  setLastSavedData(JSON.parse(JSON.stringify(fresh)));
-}, []);
+    // Otherwise → generate fresh data for this template
+    const fresh = [convertAdminTemplateToTaskData(adminTemplate)];
+    console.log(fresh, "fresh")
+    setData(fresh);
+    setLastSavedData(JSON.parse(JSON.stringify(fresh)));
+  }, []);
 
-React.useEffect(() => {
-  setHasChanges(JSON.stringify(data) != JSON.stringify(lastSavedData));
-}, [data]);
+  React.useEffect(() => {
+    setHasChanges(JSON.stringify(data) != JSON.stringify(lastSavedData));
+  }, [data]);
 
 
   return (
@@ -506,13 +546,13 @@ React.useEffect(() => {
       <AddTaskLine adminTemplate={adminTemplate} data={data} setData={setData} />
       <div className="w-full flex flex-row items-center justify-end">
         <Button variant="customNormal1" onClick={handleClearCache}>
-   Clear Table
-  </Button>
-{hasChanges && (
-  <Button className="ml-2" variant="customNormal2" onClick={saveToLocalStorage}>
-    Save Changes
-  </Button>
-)}
+          Clear Table
+        </Button>
+        {hasChanges && (
+          <Button className="ml-2" variant="customNormal2" onClick={saveToLocalStorage}>
+            Save Changes
+          </Button>
+        )}
 
       </div>
       <Card className="w-full mt-2">
@@ -522,108 +562,109 @@ React.useEffect(() => {
         </CardHeader>
 
         <CardContent>
-         {data.length === 0 ?<div className="p-4 rounded-lg w-full flex flex-row items-center justify-center border border-gray-400">
-          <p className="text-center text-gray-700">
-            No Task Lines to show... (Add new Task Line from above)
-          </p>
-         </div>:
+          {data.length === 0 ? <div className="p-4 rounded-lg w-full flex flex-row items-center justify-center border border-gray-400">
+            <p className="text-center text-gray-700">
+              No Task Lines to show... (Add new Task Line from above)
+            </p>
+          </div> :
 
- <div className="min-w-full overflow-auto max-h-[55vh]">
-            <table className={`  table-auto border-collapse border w-full ${roboto.className}`}>
-              <thead className="bg-gray-100 sticky top-[-10] z-[50] h-[80px]">
+            <div className="min-w-full overflow-auto max-h-[55vh]">
+              <table className={`  table-auto border-collapse border w-full ${roboto.className}`}>
+                <thead className="bg-gray-100 sticky top-[-10] z-[50] h-[80px]">
 
-                <tr className=" overflow-y-visible ">
-                  {/* Task Line Checkbox */}
-                  <th className="px-1 h-[20px]  text-center  text-[9px] sticky left-[-2]  bg-gray-100  pt-8 ">
+                  <tr className=" overflow-y-visible ">
+                    {/* Task Line Checkbox */}
+                    <th className="px-1 h-[20px]  text-center  text-[9px] sticky left-[-2]  bg-gray-100  pt-8 ">
 
-                  </th>
-                  {/* <th
+                    </th>
+                    {/* <th
                     className="px-4 h-[20px] text-center text-[11px] pt-8 sticky left-[15px] z-[60] bg-gray-100"
                   >
                     T/L
                   </th> */}
 
-                  {/* Dynamic Other Columns */}
-                  {adminTemplate.steps.filter((s)=>{return s.type!=='check'}).map((step) => (
-                    <th
-                      key={step.id}
-                      className="   min-w-[40px]  max-w-[50px] text-[9px] px-4 text-center pt-8  "
-                    >
-                      {step.name.toUpperCase()}
-                    </th>
-                  ))}
+                    {/* Dynamic Other Columns */}
+                    {adminTemplate.steps.filter((s) => { return s.type !== 'check' }).map((step) => (
+                      <th
+                        key={step.id}
+                        className="   min-w-[40px]  max-w-[50px] text-[9px] px-4 text-center pt-8  "
+                      >
+                        {step.name.toUpperCase()}
+                      </th>
+                    ))}
 
-                  {/* Time Sensitive Date */}
-                  {/* <th className="px-4 h-[50px] min-w-[160px] text-center  text-[11px]  pt-8 ">
+                    {/* Time Sensitive Date */}
+                    {/* <th className="px-4 h-[50px] min-w-[160px] text-center  text-[11px]  pt-8 ">
                     TIME SENSITIVE DATE
                   </th> */}
 
-                  {/* Non-TimeSensitive Step Columns */}
-                  {adminTemplate.steps.filter((s)=>{return s.type=='check'}).map((step, index) => (
-                    <th
-                      key={step.id}
-                      className="cursor-pointer px-1 h-[50px] min-w-[80px] text-center text-[9px]  "
+                    {/* Non-TimeSensitive Step Columns */}
+                    {adminTemplate.steps.filter((s) => { return s.type == 'check' }).map((step, index) => (
+                      <th
+                        key={step.id}
+                        className="cursor-pointer px-1 h-[50px] min-w-[80px] text-center text-[9px]  "
+                      >
+                        <div className="w-full flex flex-col items-center ">
+                          {step.columnDetails ? <button
+                            className="my-2 cursor-pointer"
+                            onClick={() => {
+                              HeaderDetails(Array.isArray(step.columnDetails)
+                                ? (() => {
+                                  const filtered = step.columnDetails.filter(
+                                    item => item.description?.trim() !== ""
+                                  );
+                                  console.log("filtered", filtered)
+                                  if (filtered.length == 1) {
+                                    return filtered[0] ? { description: filtered[0]?.description, copyEnabled: true } : step.columnDetails;
+                                  }
+                                  if (filtered.length == 0) {
+                                    return step.columnDetails
+                                  }
+                                  return filtered;
+                                })()
+                                : step.columnDetails as ColumnDetails, step.name)
+                            }}
+
+                          >
+
+                            <QuestionMark />
+                          </button> : <div className="my-4"></div>}
+
+                          <p>{step.name}</p>
+                        </div>
+                      </th>
+
+                    ))}
+
+                    {/* Final Columns */}
+                    {finalColumns.map((col) => (
+                      <th
+                        key={col}
+                        className="px-4 h-[50px] min-w-[110px] text-center text-xs  pt-8 "
+                      >
+                        {col.toUpperCase()}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+
+                {data.length > 0 &&
+                  <tbody>
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={onDragEnd}
+                      modifiers={[restrictToVerticalAxis, restrictToParentElement]}
                     >
-                      <div className="w-full flex flex-col items-center ">
-                        {step.columnDetails ? <button
-                          className="my-2 cursor-pointer"
-                          onClick={() => { 
-                            HeaderDetails(Array.isArray(step.columnDetails)
-  ? (() => {
-      const filtered = step.columnDetails.filter(
-        item => item.description?.trim() !== ""
-      );
-      console.log("filtered",filtered)
-      if (filtered.length == 1) {
-          return filtered[0]? {description:filtered[0]?.description,copyEnabled:true} : step.columnDetails;
-      }
-      if (filtered.length == 0){
-        return step.columnDetails
-      }
-      return filtered;
-    })()
-  : step.columnDetails as ColumnDetails, step.name)}}
 
-                        >
+                      <SortableContext
+                        items={data.map((r) => r.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        {data.map((row: TaskRow, idx: number) => (
+                          <DraggableRow key={row.id} id={row.id} className="border border-2 border-b-stone-200  ">
 
-                          <QuestionMark />
-                        </button> : <div className="my-4"></div>}
-
-                        <p>{step.name}</p>
-                      </div>
-                    </th>
-
-                  ))}
-
-                  {/* Final Columns */}
-                  {finalColumns.map((col) => (
-                    <th
-                      key={col}
-                      className="px-4 h-[50px] min-w-[110px] text-center text-xs  pt-8 "
-                    >
-                      {col.toUpperCase()}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-
-             {data.length > 0  &&
-                    <tbody>
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={onDragEnd}
-                  modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-                >
-
-                  <SortableContext
-                    items={data.map((r) => r.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {data.map((row: TaskRow, idx: number) => (
-                      <DraggableRow key={row.id} id={row.id} className="border border-2 border-b-stone-200  ">
-
-                        {/* <td
+                            {/* <td
                           className={`text-center w-[80px] ${row.taskLineChecked ? "bg-red-600" : "bg-stone-200"} sticky left-[16px] z-[49]`}
                         >
                           <Checkbox
@@ -633,298 +674,298 @@ React.useEffect(() => {
                           />
                         </td> */}
 
-                        {/* Other Columns */}
-                        {Array.from(
-                          new Set(
-                            data.flatMap((d: any) =>
-                              d.otherColumns.map((col: any) => col.name)
-                            )
-                          )
-                        ).map((headerName, index) => {
-                          const colObj = row.otherColumns.find(
-                            (col: any) => col.name === headerName
-                          );
-                          return (
-                            <td
+                            {/* Other Columns */}
+                            {Array.from(
+                              new Set(
+                                data.flatMap((d: any) =>
+                                  d.otherColumns.map((col: any) => col.name)
+                                )
+                              )
+                            ).map((headerName, index) => {
+                              const colObj = row.otherColumns.find(
+                                (col: any) => col.name === headerName
+                              );
+                              return (
+                                <td
 
-                              key={headerName}
-                              style={{
-                                backgroundColor: row.taskLineChecked
-                                  ? "#e7000b"
-                                  : index === 0 && colObj?.type=='text'
-                                    ? row.color
-                                    : "white",
-                                color: row.taskLineChecked
-                                  ? "white"
-                                  : index === 0  
-                                    ?  getContrastText(row.color) 
-                                    : "#1e2939", 
-                              }}
+                                  key={headerName}
+                                  style={{
+                                    backgroundColor: row.taskLineChecked
+                                      ? "#e7000b"
+                                      : index === 0 && colObj?.type == 'text'
+                                        ? row.color
+                                        : "white",
+                                    color: row.taskLineChecked
+                                      ? "white"
+                                      : index === 0
+                                        ? getContrastText(row.color)
+                                        : "#1e2939",
+                                  }}
 
-                              className={`text-center min-w-[40px]   whitespace-nowrap `}
-                            >
-                              {colObj ? (
-                                colObj.type === "text" ? (
-                                  <input
-                                    type="text"
-                                    placeholder="Enter text..."
+                                  className={`text-center min-w-[40px]   whitespace-nowrap `}
+                                >
+                                  {colObj ? (
+                                    colObj.type === "text" ? (
+                                      <input
+                                        type="text"
+                                        placeholder="Enter text..."
 
-                                    className="p-1 text-center bg-transparent placeholder:italic focus:outline-none text-xs"
-                                    value={colObj.value || ""}
-                                    onChange={(e) => {
-                                      const newValue = e.target.value;
-                                      setData((prev: any) => {
-                                        const updated = [...prev];
-                                        updated[idx].otherColumns = updated[idx].otherColumns.map((c: any) =>
-                                          c.name === colObj.name ? { ...c, value: newValue } : c
-                                        );
-                                        return updated;
-                                      });
-                                    }}
-                                  />
-                                ) : colObj.type === "date" ? (
-                                    <Popover>
-                            <PopoverTrigger onClick={()=>console.log(colObj)} asChild>
-                              {(() => {
-                                // --- Determine background color ---
-                                let bgColor = "transparent";
-                                if (!row.taskLineChecked && colObj.value) {
-                                  const today = new Date();
-                                  const due = new Date(colObj.value);
-                                  const diffDays = Math.ceil(
-                                    (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-                                  );
-
-                                  const { warning, danger } = colObj.timeSensitiveColors || {};
-                                  if (danger && diffDays <= danger.days) bgColor = danger.color;
-                                  else if (warning && diffDays <= warning.days) bgColor = warning.color;
-                                }
-
-                                // --- Compute luminance to choose contrasting text color ---
-                                const hex = bgColor.replace("#", "");
-                                const r = parseInt(hex.substring(0, 2), 16);
-                                const g = parseInt(hex.substring(2, 4), 16);
-                                const b = parseInt(hex.substring(4, 6), 16);
-                                const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                                let textColor = "#000"; // default
-                                if (bgColor && bgColor.startsWith("#")) {
-                                  const hex = bgColor.replace("#", "");
-                                  const r = parseInt(hex.substring(0, 2), 16);
-                                  const g = parseInt(hex.substring(2, 4), 16);
-                                  const b = parseInt(hex.substring(4, 6), 16);
-                                  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                                  textColor = luminance > 0.6 ? "#000" : "#fff";
-                                }
-
-                                return (
-                                  <div
-                                    className={cn(
-                                      "w-full text-xs text-center py-1 bg-transparent focus:outline-none cursor-pointer rounded-md italic "
-                                    )}
-
-                                  >
-                                    {colObj.value ? (
-                                      <span
-                                        style={{
-                                          padding: '4px',
-                                          backgroundColor:colObj.isTimeSensitive? bgColor:"transparent",
-                                          color: row.taskLineChecked
-                                            ? "white"
-                                            : colObj.isTimeSensitive
-                                              ? textColor
-                                              : "gray",
-                                        }}
-                                        className="font-medium not-italic">
-                                        {colObj.value} 
-                                      </span>
-                                    ) : (
-                                      <span className="text-gray-400 italic">Select date...</span>
-                                    )}
-                                  </div>
-                                );
-                              })()}
-                            </PopoverTrigger>
-
-                            <PopoverContent className="p-0 w-auto" align="center">
-                              <Calendar
-                                mode="single"
-                                selected={
-                                  colObj.value ? new Date( colObj.value) : undefined
-                                }
-                               
-
- onSelect={(date) => {
-                                          if (!date) return;
-                                          // ✅ Convert to local YYYY-MM-DD to avoid timezone shifts
-                                          const yyyy = date.getFullYear();
-                                          const mm = String(date.getMonth() + 1).padStart(2, "0");
-                                          const dd = String(date.getDate()).padStart(2, "0");
-                                          const formatted = `${yyyy}-${mm}-${dd}`;
-
+                                        className="p-1 text-center bg-transparent placeholder:italic focus:outline-none text-xs"
+                                        value={colObj.value || ""}
+                                        onChange={(e) => {
+                                          const newValue = e.target.value;
                                           setData((prev: any) => {
                                             const updated = [...prev];
-                                            updated[idx].otherColumns = updated[idx].otherColumns.map(
-                                              (c: any) =>
-                                                c.name === colObj.name
-                                                  ? { ...c, value: formatted }
-                                                  : c
+                                            updated[idx].otherColumns = updated[idx].otherColumns.map((c: any) =>
+                                              c.name === colObj.name ? { ...c, value: newValue } : c
                                             );
                                             return updated;
                                           });
                                         }}
-                              />
-                            </PopoverContent>
-                          </Popover>
+                                      />
+                                    ) : colObj.type === "date" ? (
+                                      <Popover>
+                                        <PopoverTrigger onClick={() => console.log(colObj)} asChild>
+                                          {(() => {
+                                            // --- Determine background color ---
+                                            let bgColor = "transparent";
+                                            if (!row.taskLineChecked && colObj.value) {
+                                              const today = new Date();
+                                              const due = new Date(colObj.value);
+                                              const diffDays = Math.ceil(
+                                                (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+                                              );
 
-                                ) : (
-                                  <span className="text-gray-400">-</span>
-                                )
-                              ) : (
-                                <span className="text-gray-400">-</span>
-                              )}
-                            </td>
+                                              const { warning, danger } = colObj.timeSensitiveColors || {};
+                                              if (danger && diffDays <= danger.days) bgColor = danger.color;
+                                              else if (warning && diffDays <= warning.days) bgColor = warning.color;
+                                            }
 
-                          );
-                        })}
+                                            // --- Compute luminance to choose contrasting text color ---
+                                            const hex = bgColor.replace("#", "");
+                                            const r = parseInt(hex.substring(0, 2), 16);
+                                            const g = parseInt(hex.substring(2, 4), 16);
+                                            const b = parseInt(hex.substring(4, 6), 16);
+                                            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                                            let textColor = "#000"; // default
+                                            if (bgColor && bgColor.startsWith("#")) {
+                                              const hex = bgColor.replace("#", "");
+                                              const r = parseInt(hex.substring(0, 2), 16);
+                                              const g = parseInt(hex.substring(2, 4), 16);
+                                              const b = parseInt(hex.substring(4, 6), 16);
+                                              const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                                              textColor = luminance > 0.6 ? "#000" : "#fff";
+                                            }
 
-                        {/* Time Sensitive Date */}
-                        
+                                            return (
+                                              <div
+                                                className={cn(
+                                                  "w-full text-xs text-center py-1 bg-transparent focus:outline-none cursor-pointer rounded-md italic "
+                                                )}
+
+                                              >
+                                                {colObj.value ? (
+                                                  <span
+                                                    style={{
+                                                      padding: '4px',
+                                                      backgroundColor: colObj.isTimeSensitive ? bgColor : "transparent",
+                                                      color: row.taskLineChecked
+                                                        ? "white"
+                                                        : colObj.isTimeSensitive
+                                                          ? textColor
+                                                          : "gray",
+                                                    }}
+                                                    className="font-medium not-italic">
+                                                    {colObj.value}
+                                                  </span>
+                                                ) : (
+                                                  <span className="text-gray-400 italic">Select date...</span>
+                                                )}
+                                              </div>
+                                            );
+                                          })()}
+                                        </PopoverTrigger>
+
+                                        <PopoverContent className="p-0 w-auto" align="center">
+                                          <Calendar
+                                            mode="single"
+                                            selected={
+                                              colObj.value ? new Date(colObj.value) : undefined
+                                            }
+
+
+                                            onSelect={(date) => {
+                                              if (!date) return;
+                                              // ✅ Convert to local YYYY-MM-DD to avoid timezone shifts
+                                              const yyyy = date.getFullYear();
+                                              const mm = String(date.getMonth() + 1).padStart(2, "0");
+                                              const dd = String(date.getDate()).padStart(2, "0");
+                                              const formatted = `${yyyy}-${mm}-${dd}`;
+
+                                              setData((prev: any) => {
+                                                const updated = [...prev];
+                                                updated[idx].otherColumns = updated[idx].otherColumns.map(
+                                                  (c: any) =>
+                                                    c.name === colObj.name
+                                                      ? { ...c, value: formatted }
+                                                      : c
+                                                );
+                                                return updated;
+                                              });
+                                            }}
+                                          />
+                                        </PopoverContent>
+                                      </Popover>
+
+                                    ) : (
+                                      <span className="text-gray-400">-</span>
+                                    )
+                                  ) : (
+                                    <span className="text-gray-400">-</span>
+                                  )}
+                                </td>
+
+                              );
+                            })}
+
+                            {/* Time Sensitive Date */}
 
 
 
-                        {/* Non-time-sensitive steps */}
-                        {row.steps.map((stepName) => {
-                          const step = row.steps.find(
-                            (s: any) => s.columnId === stepName.columnId
-                          );
-                          return (
-                            <td
 
-                              key={stepName.id}
+                            {/* Non-time-sensitive steps */}
+                            {row.steps.map((stepName) => {
+                              const step = row.steps.find(
+                                (s: any) => s.columnId === stepName.columnId
+                              );
+                              return (
+                                <td
 
-                              onContextMenu={(e) => {
-                                e.preventDefault();
-                                if (step) {
-                                  setNotesPopup({
-                                    open: true,
-                                    x: e.clientX,
-                                    y: e.clientY,
-                                    rowIndex: idx,
-                                    stepName: step.name,
-                                    value: step.notes || ""
-                                  });
-                                }
-                              }}
+                                  key={stepName.id}
 
-                              className={`    text-center  w-[120px] h-[9px] 
+                                  onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    if (step) {
+                                      setNotesPopup({
+                                        open: true,
+                                        x: e.clientX,
+                                        y: e.clientY,
+                                        rowIndex: idx,
+                                        stepName: step.name,
+                                        value: step.notes || ""
+                                      });
+                                    }
+                                  }}
+
+                                  className={`    text-center  w-[120px] h-[9px] 
                   ${row.taskLineChecked && "bg-red-600"}
                   `}
-                            >
-                              <TooltipProvider>
-                                <Tooltip> 
-                                  <TooltipTrigger asChild>
-                                    <div className={`relative bg-gray-100 flex flex-col justify-center items-center w-full min-h-[25px]
+                                >
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div className={`relative bg-gray-100 flex flex-col justify-center items-center w-full min-h-[25px]
         
          `}
-                                    >
-                                      <div
-                                        onClick={() => {
-                                          setData(prev => {
-                                            return prev.map((taskRow, rIndex) => {
-                                              if (rIndex !== idx) return taskRow;
+                                        >
+                                          <div
+                                            onClick={() => {
+                                              setData(prev => {
+                                                return prev.map((taskRow, rIndex) => {
+                                                  if (rIndex !== idx) return taskRow;
 
-                                              return {
-                                                ...taskRow,
-                                                steps: taskRow.steps.map(s =>
-                                                  s.columnId === stepName.columnId
-                                                    ? { ...s, markedNextRed: !(s.markedNextRed ?? false) }
-                                                    : s
-                                                )
-                                              };
-                                            });
-                                          });
-                                        }}
+                                                  return {
+                                                    ...taskRow,
+                                                    steps: taskRow.steps.map(s =>
+                                                      s.columnId === stepName.columnId
+                                                        ? { ...s, markedNextRed: !(s.markedNextRed ?? false) }
+                                                        : s
+                                                    )
+                                                  };
+                                                });
+                                              });
+                                            }}
 
 
-                                        className={`relative flex flex-col items-center justify-center w-[98.5%] min-h-[25px] ${row.taskLineChecked ? "bg-red-600" : step ? step.completed ? "bg-lime-500"
-                                          : step.markedNext ? "bg-yellow-300"
-                                            : step.markedNextRed ? "bg-red-200" : "bg-white" : ""}`}>
-                                        {/* Notes icon */}
-                                        {step?.notes && (
-                                          <div className="absolute flex flex-row items-center justify-end top-0 right-0">
-                                            <MarkedNotes />
-                                          </div>
-                                        )}
+                                            className={`relative flex flex-col items-center justify-center w-[98.5%] min-h-[25px] ${row.taskLineChecked ? "bg-red-600" : step ? step.completed ? "bg-lime-500"
+                                              : step.markedNext ? "bg-yellow-300"
+                                                : step.markedNextRed ? "bg-red-200" : "bg-white" : ""}`}>
+                                            {/* Notes icon */}
+                                            {step?.notes && (
+                                              <div className="absolute flex flex-row items-center justify-end top-0 right-0">
+                                                <MarkedNotes />
+                                              </div>
+                                            )}
 
-                                        {!row.taskLineChecked ? (
-                                          <div className="flex flex-col items-center justify-center h-full">
+                                            {!row.taskLineChecked ? (
+                                              <div className="flex flex-col items-center justify-center h-full">
 
-                                            {step ? (
-                                              <>
-                                                <Checkbox
-                                                  variant={step.completed ? "white" : step.markedNext ? "yellow" : "success"}
-                                                  checked={step.completed}
-                                                  onClick={(e) => e.stopPropagation()}
-                                                  onCheckedChange={(v) => handleCheckbox(idx, step.name, v)}
-                                                /></>
+                                                {step ? (
+                                                  <>
+                                                    <Checkbox
+                                                      variant={step.completed ? "white" : step.markedNext ? "yellow" : "success"}
+                                                      checked={step.completed}
+                                                      onClick={(e) => e.stopPropagation()}
+                                                      onCheckedChange={(v) => handleCheckbox(idx, step.name, v)}
+                                                    /></>
+                                                ) : (
+                                                  <span className={`${row.taskLineChecked ? "text-gray-200" : "text-gray-400"} text-xs`}>-</span>
+                                                )}
+                                              </div>
                                             ) : (
-                                              <span className={`${row.taskLineChecked ? "text-gray-200" : "text-gray-400"} text-xs`}>-</span>
+                                              <p className="my-2"></p>
                                             )}
                                           </div>
-                                        ) : (
-                                          <p className="my-2"></p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </TooltipTrigger>
+                                        </div>
+                                      </TooltipTrigger>
 
-                                  {/* ✅ Tooltip on hover of entire div */}
-                                  {step?.notes && (
-                                    <TooltipContent
-                                      side="bottom"
-                                      className="min-w-[120px] text-xs p-3 bg-white shadow-md rounded-md border text-gray-700"
-                                    >
-                                      <div className="flex flex-col items-start">
-                                        <h1 className="font-bold text-black">Notes</h1>
-                                        <p>{step.notes}</p>
+                                      {/* ✅ Tooltip on hover of entire div */}
+                                      {step?.notes && (
+                                        <TooltipContent
+                                          side="bottom"
+                                          className="min-w-[120px] text-xs p-3 bg-white shadow-md rounded-md border text-gray-700"
+                                        >
+                                          <div className="flex flex-col items-start">
+                                            <h1 className="font-bold text-black">Notes</h1>
+                                            <p>{step.notes}</p>
 
-                                      </div>
-                                    </TooltipContent>
-                                  )}
-                                </Tooltip>
-                              </TooltipProvider>
+                                          </div>
+                                        </TooltipContent>
+                                      )}
+                                    </Tooltip>
+                                  </TooltipProvider>
 
-                            </td>
+                                </td>
 
-                          );
-                        })}
+                              );
+                            })}
 
-                        {/* Final Columns */}
-                        {finalColumns.map((col) => (
-                          <td
-                            key={col}
-                            className={`pr-4 text-center min-w-[55px] ${row.taskLineChecked ? "bg-red-600" : "bg-white"
-                              }`}
-                          >
-                            <Flag
-                              disabled={!row.steps.every((s: any) => s.completed)}
-                              checked={!!row[col as FinalColumnKey]}
-                              onToggle={(v) => handleFinalCheckbox(idx, col as FinalColumnKey, v)}
-                              // color={row[col as FinalColumnKey]?'black':'gray'}/>
-                              color={row.steps.every((s: any) => s.completed) ? 'black' : '#999999ff'} />
+                            {/* Final Columns */}
+                            {finalColumns.map((col) => (
+                              <td
+                                key={col}
+                                className={`pr-4 text-center min-w-[55px] ${row.taskLineChecked ? "bg-red-600" : "bg-white"
+                                  }`}
+                              >
+                                <Flag
+                                  disabled={!row.steps.every((s: any) => s.completed)}
+                                  checked={!!row[col as FinalColumnKey]}
+                                  onToggle={(v) => handleFinalCheckbox(idx, col as FinalColumnKey, v)}
+                                  // color={row[col as FinalColumnKey]?'black':'gray'}/>
+                                  color={row.steps.every((s: any) => s.completed) ? 'black' : '#999999ff'} />
 
 
-                          </td>
+                              </td>
+                            ))}
+                          </DraggableRow>
                         ))}
-                      </DraggableRow>
-                    ))}
-                  </SortableContext>
-                </DndContext>
-              </tbody>}
-            </table>
-          </div>
+                      </SortableContext>
+                    </DndContext>
+                  </tbody>}
+              </table>
+            </div>
 
-         }
+          }
 
 
 
@@ -941,21 +982,25 @@ React.useEffect(() => {
         onSave={saveNotes}
         onDelete={deleteNotes}
       />
-  <ConfirmModal
+      <ConfirmModal
         isOpen={modalOpen}
         message="You want this task line to be marked as completed? It will delete this taskline, do you want to continue?"
-        onCancel={()=>setModalOpen(false) }
+        onCancel={() => setModalOpen(false)}
         onConfirm={() => {
-    if (selectedRow !== null) {
-     setData((prev) => { const updated = [...prev]; const wasChecked = updated[selectedRow][selectedCol as FinalColumnKey]; 
-      
-      updated[selectedRow] = { ...updated[selectedRow], [selectedCol as FinalColumnKey]: true, steps: updated[selectedRow].steps.map((step) => ({ ...step, completed: true, })), }; if (!wasChecked && true) { toast.success("Task Marked as Completed ✅"); 
-        // ✅ DELETE THIS ROW 
-        const filtered = updated.filter((_, i) => i !== selectedRow); return filtered; } return updated; });
-      console.log("Confirmed row:", selectedRow);
-    }
-    setModalOpen(false);
-  }}
+          if (selectedRow !== null) {
+            setData((prev) => {
+              const updated = [...prev]; const wasChecked = updated[selectedRow][selectedCol as FinalColumnKey];
+
+              updated[selectedRow] = { ...updated[selectedRow], [selectedCol as FinalColumnKey]: true, steps: updated[selectedRow].steps.map((step) => ({ ...step, completed: true, })), }; if (!wasChecked && true) {
+                toast.success("Task Marked as Completed ✅");
+                // ✅ DELETE THIS ROW 
+                const filtered = updated.filter((_, i) => i !== selectedRow); return filtered;
+              } return updated;
+            });
+            console.log("Confirmed row:", selectedRow);
+          }
+          setModalOpen(false);
+        }}
       />
     </div>
   );

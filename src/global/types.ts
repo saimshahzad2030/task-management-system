@@ -33,7 +33,7 @@ export interface Step {
   trigger?: "popup" | "relation" | "completed" ; // Admin trigger type
    popupDescription?:string | null
     linkedStep?:{id:number ,notes?:string, futureColumnThings?:{
-        needed:boolean;
+        needed:boolean | "true" | "false";
         description:string;
       }[]} | null
   info?: string | null;                          // Instruction, note, or email text
@@ -61,7 +61,7 @@ export interface ListStep {
        notes?:string,
      
       futureColumnThings?:{
-        needed:boolean;
+     needed:boolean | "true" | "false";
         description:string;
       }[]
     }

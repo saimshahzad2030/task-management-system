@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NotesPopupState } from "@/global/types";
 import { X } from "lucide-react";
+import { Textarea } from "../ui/textarea";
 
 interface NotesDialogProps {
   open: boolean;
@@ -65,7 +66,7 @@ export default function NotesDialog({
       </div>
       <p className="font-bold text-sm mb-2">{notesPopup.stepName}</p>
 
-      <Input
+      <Textarea
         value={notesPopup.value}
         onChange={(e) =>
           setNotesPopup((prev) => ({ ...prev, value: e.target.value }))

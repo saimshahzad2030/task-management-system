@@ -119,9 +119,8 @@ export default function AdminTemplates() {
     setTemplateName(tmpl.name)
     setCategories(tmpl.categories);
     setDescription(tmpl.description);
-    console.log(tmpl, "tmpl")
-    setSteps(tmpl.steps);
-
+      setSteps(tmpl.steps);
+    console.log("tmpl",tmpl)
     setShowForm(true);
   };
 
@@ -445,6 +444,7 @@ export default function AdminTemplates() {
 
 
     }
+    
     if (editingTemplate) {
 
       const updated = {
@@ -766,16 +766,16 @@ export default function AdminTemplates() {
                                               <span className="text-xs text-gray-600 ml-2 text-right">Enter Reminder Note to Future Column?</span>
                                               <div className="flex flex-row items-center justify-end mt-2 w-full">
                                                 <span className={`text-xs ${item.needed ? "text-gray-400" : "text-gray-800"} mx-2`}>No</span>
-
+                               
                                                 <Switch
-                                                  checked={item.needed}
+                                                  checked={item.needed === true || item.needed === "true"}
                                                   onCheckedChange={(val) => {
                                                     const copy = step.linkedStep?.futureColumnThings
                                                       ? [...step.linkedStep.futureColumnThings]
                                                       : [];
 
                                                     copy[i] = { ...copy[i], needed: val };
-
+                                                        console.log("val",val)
                                                     updateStep(index, "linkedStep", {
                                                       ...step.linkedStep,
                                                       futureColumnThings: copy,
@@ -816,25 +816,31 @@ export default function AdminTemplates() {
                                       <div className="flex flex-row ">
                                         <div className=" ">
                                           <label className="text-xs">Related Step</label>
+                                            <Select
+  onValueChange={(v) =>
+    updateStep(index, "linkedStep", {
+      index: Number(v),
+      notes: step.linkedStep?.notes || "",
+      futureColumnThings: step.linkedStep?.futureColumnThings || [],
+    })
+  }
+  defaultValue={
+    steps.findIndex(s => s.id === step.linkedStep?.id).toString() || ""
+  }
+>
+  <SelectTrigger className="min-w-[100px] bg-white border border-gray-400">
+    <SelectValue placeholder="Select step" />
+  </SelectTrigger>
 
-                                          <Select
-                                            onValueChange={(v) => updateStep(index, "linkedStep", { index: Number(v), notes: step.linkedStep?.notes || "", futureColumnThings: step.linkedStep?.futureColumnThings || [] })}
-                                            defaultValue={step.linkedStep?.id?.toString()}
-                                          >
-                                            <SelectTrigger className="min-w-[100px] bg-white border border-gray-400">
-                                              <SelectValue placeholder="Select step" />
-                                            </SelectTrigger>
+  <SelectContent>
+    {steps.map((s, ind) => (
+      <SelectItem key={s.id} disabled={ind === index} value={ind.toString()}>
+        Step {ind + 1}: {s.name || "Unnamed"}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
 
-                                            <SelectContent>
-                                              {steps
-                                                // cannot link to itself
-                                                .map((s, ind) => (
-                                                  <SelectItem key={s.id} disabled={ind === index} value={ind.toString()}>
-                                                    Step {Number(ind) + 1}: {s.name || "Unnamed"}
-                                                  </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                          </Select>
                                         </div>
                                         {/* <div className="flex flex-col items-start w-full  ml-4">
                                           <label className="text-xs my-1">Notes</label>
