@@ -22,6 +22,8 @@ import { set } from "zod";
 import { QuestionMark } from "@/global/icons";
 import FullScreenLoader from "../Loader/FullScreenLoader";
 import { useAlert } from "../CenteredError/ShowCenteredError";
+import { getInvalidCheckIndexes, isInvalidCheckPlacement } from "@/utils/otherutils";
+import UserTaskTable from "../UserTaskTable/UserTaskTable";
 
 const showRequiredToast = (title: string, desc: string) => {
   toast.custom((t) => (
@@ -119,8 +121,8 @@ export default function AdminTemplates() {
     setTemplateName(tmpl.name)
     setCategories(tmpl.categories);
     setDescription(tmpl.description);
-      setSteps(tmpl.steps);
-    console.log("tmpl",tmpl)
+    setSteps(tmpl.steps);
+    console.log("tmpl", tmpl)
     setShowForm(true);
   };
 
@@ -157,6 +159,7 @@ export default function AdminTemplates() {
   };
   // steps array
   const [data, setData] = React.useState<TaskRow | null>(null)
+  const [invalidStepIndexes, setInvalidStepIndexes] = useState<number[]>([]);
 
 
   const [steps, setSteps] = useState<Step[]>([]);
@@ -292,24 +295,41 @@ export default function AdminTemplates() {
       .length <= 1) return;
     setCategories(prev => prev.filter((_, i) => i !== index));
   };
-  function moveUp(index: number) {
+    function moveUp(index: number) {
     if (index === 0) return;
+
     setSteps(prev => {
       const copy = [...prev];
       [copy[index - 1], copy[index]] = [copy[index], copy[index - 1]];
+
+      if (isInvalidCheckPlacement(copy, index - 1)) {
+        toast.error(
+          "A check-type step cannot be placed between text or date steps."
+        );
+        return prev; // rollback
+      }
+
       return copy;
     });
   }
-
   function moveDown(index: number) {
     setSteps(prev => {
       if (index === prev.length - 1) return prev;
+
       const copy = [...prev];
       [copy[index + 1], copy[index]] = [copy[index], copy[index + 1]];
+
+      if (isInvalidCheckPlacement(copy, index + 1)) {
+        toast.error(
+          "A check-type step cannot be placed between text or date steps."
+        );
+        return prev; // rollback
+      }
+
       return copy;
     });
   }
-
+ 
   function reorderSteps(fromIndex: number, toIndex: number) {
     setSteps(prev => {
       const copy = [...prev];
@@ -318,6 +338,7 @@ export default function AdminTemplates() {
       return copy;
     });
   }
+  
   const saveTemplate = async () => {
     setSaveTemplateLoading(true)
     if (!categories) {
@@ -379,7 +400,20 @@ export default function AdminTemplates() {
 
       return;
     }
+    const invalidCheckIndexes = getInvalidCheckIndexes(steps);
 
+    if (invalidCheckIndexes.length > 0) {
+      setInvalidStepIndexes(invalidCheckIndexes);
+
+      toast.error(
+        "Check-type column cannot be placed between text or date columns."
+      );
+
+      setSaveTemplateLoading(false);
+      return;
+    } else {
+      setInvalidStepIndexes([]);
+    }
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
       if (!step.name || !step.name.trim()) {
@@ -444,7 +478,7 @@ export default function AdminTemplates() {
 
 
     }
-    
+
     if (editingTemplate) {
 
       const updated = {
@@ -618,13 +652,16 @@ export default function AdminTemplates() {
             <Droppable droppableId="steps">
               {(provided) => (
                 <div {...provided.droppableProps} ref={provided.innerRef}>
-                  {steps.map((step, index) => (
-                    <Draggable key={index} draggableId={String(index)} index={index} >
+                  {steps.map((step, index) => {
+                     
+                    return (<Draggable key={index} draggableId={String(index)} index={index} >
                       {(provided) => (
-                        <div key={index}
+                        <div key={step?.id}
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          className="border p-3 rounded-lg bg-gray-200 border border-gray-700 space-y-2 mt-4">
+                          className={`border p-3 rounded-lg bg-gray-200 border space-y-2 mt-4  
+                            ${invalidStepIndexes.includes(index) ? "border-red-500 bg-red-100 animate-pulse" : "border-gray-700  "}
+                          `}>
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               {/* DRAG HANDLE */}
@@ -637,10 +674,18 @@ export default function AdminTemplates() {
 
                             <div className="flex items-center gap-2">
                               {/* UP BUTTON */}
-                              <Button size="sm" onClick={() => moveUp(index)}>↑</Button>
+                              <Button size="sm" onClick={() => {
+                                  setInvalidStepIndexes(prev =>
+    prev.filter(i => i !== index)
+  );
+                                 moveUp(index)}}>↑</Button>
 
                               {/* DOWN BUTTON */}
-                              <Button size="sm" onClick={() => moveDown(index)}>↓</Button>
+                              <Button size="sm" onClick={() =>{ 
+                                  setInvalidStepIndexes(prev =>
+    prev.filter(i => i !== index)
+  );
+                                moveDown(index)}}>↓</Button>
 
                               {/* DELETE */}
                               {steps.length > 1 && (
@@ -655,7 +700,9 @@ export default function AdminTemplates() {
                             placeholder="Column Name"
                             value={step.name}
                             className="border border-gray-400  bg-white"
-                            onChange={e => updateStep(index, "name", e.target.value)}
+                            onChange={e => {
+                                
+                              updateStep(index, "name", e.target.value)}}
                           />
 
                           <div className="grid grid-cols-9 gap-2">
@@ -766,7 +813,7 @@ export default function AdminTemplates() {
                                               <span className="text-xs text-gray-600 ml-2 text-right">Enter Reminder Note to Future Column?</span>
                                               <div className="flex flex-row items-center justify-end mt-2 w-full">
                                                 <span className={`text-xs ${item.needed ? "text-gray-400" : "text-gray-800"} mx-2`}>No</span>
-                               
+
                                                 <Switch
                                                   checked={item.needed === true || item.needed === "true"}
                                                   onCheckedChange={(val) => {
@@ -775,7 +822,7 @@ export default function AdminTemplates() {
                                                       : [];
 
                                                     copy[i] = { ...copy[i], needed: val };
-                                                        console.log("val",val)
+                                                    console.log("val", val)
                                                     updateStep(index, "linkedStep", {
                                                       ...step.linkedStep,
                                                       futureColumnThings: copy,
@@ -816,30 +863,30 @@ export default function AdminTemplates() {
                                       <div className="flex flex-row ">
                                         <div className=" ">
                                           <label className="text-xs">Related Step</label>
-                                            <Select
-  onValueChange={(v) =>
-    updateStep(index, "linkedStep", {
-      index: Number(v),
-      notes: step.linkedStep?.notes || "",
-      futureColumnThings: step.linkedStep?.futureColumnThings || [],
-    })
-  }
-  defaultValue={
-    steps.findIndex(s => s.id === step.linkedStep?.id).toString() || ""
-  }
->
-  <SelectTrigger className="min-w-[100px] bg-white border border-gray-400">
-    <SelectValue placeholder="Select step" />
-  </SelectTrigger>
+                                          <Select
+                                            onValueChange={(v) =>
+                                              updateStep(index, "linkedStep", {
+                                                index: Number(v),
+                                                notes: step.linkedStep?.notes || "",
+                                                futureColumnThings: step.linkedStep?.futureColumnThings || [],
+                                              })
+                                            }
+                                            defaultValue={
+                                              steps.findIndex(s => s.id === step.linkedStep?.id).toString() || ""
+                                            }
+                                          >
+                                            <SelectTrigger className="min-w-[100px] bg-white border border-gray-400">
+                                              <SelectValue placeholder="Select step" />
+                                            </SelectTrigger>
 
-  <SelectContent>
-    {steps.map((s, ind) => (
-      <SelectItem key={s.id} disabled={ind === index} value={ind.toString()}>
-        Step {ind + 1}: {s.name || "Unnamed"}
-      </SelectItem>
-    ))}
-  </SelectContent>
-</Select>
+                                            <SelectContent>
+                                              {steps.map((s, ind) => (
+                                                <SelectItem key={s.id} disabled={ind === index} value={ind.toString()}>
+                                                  Step {ind + 1}: {s.name || "Unnamed"}
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
 
                                         </div>
                                         {/* <div className="flex flex-col items-start w-full  ml-4">
@@ -1111,8 +1158,9 @@ export default function AdminTemplates() {
 
                         </div>
                       )}
-                    </Draggable>
-                  ))}
+                    </Draggable>)
+
+                  })}
 
                 </div>
               )}
@@ -1122,8 +1170,103 @@ export default function AdminTemplates() {
             + Add Column
           </Button>
 
+<div className="flex flex-row items-center justify-center w-full">
+        {<> 
+        <Button className="cursor-pointer m-4" variant="outline" onClick={saveTemplate}> 
+                      {"Save Template"}
+                    </Button>
+        {steps.length > 0 && steps.every((s) => s.name) && <>
+             
+        <Button
+          className="m-4 cursor-pointer"
+          onClick={() => {
+            const template: AdminTemplate = {
+              id: "tmp_" + Date.now(),
+              name: templateName || "Unnamed",
+              categories,
+              description,
+              steps,
 
-          <ColumnHeaderTable name={templateName} saveTemplate={saveTemplate} categories={categories} color={color} description={description} steps={steps} data={data} setData={setData} />
+            };
+
+            const dynamicOtherColumns = template.steps
+              .filter((step) => step.type !== "check")
+              .map((step, idx) => ({
+                name: step.name,
+                type: (step.type ?? "text") as "text" | "date" | "check",
+                value: "",
+                isTimeSensitive: step.isTimeSensitive ?? false,
+                timeSensitiveColors: step.timeSensitiveColors ?? {
+                  warning: { days: 3, color: "#fbbf24" }, // Yellow
+                  danger: { days: 1, color: "#f87171" },  // Red
+                }
+                ,
+                columnId: idx + 1,
+              }));
+
+            const newTask: TaskRow = {
+              id: crypto.randomUUID(),
+              template: template,
+              // name: template.name,
+              category: { id: 2, name: templateName || "Unnamed", color: color || "#000000" },
+              taskLineChecked: false,
+              timeSensitiveDate: null,
+              color: 'red',
+              otherColumns: dynamicOtherColumns,
+              steps: template.steps
+                .filter((s) => s.type === "check") // ✅ ONLY check-type steps
+                .map((s, i) => ({
+                  columnId: i + 1,
+                  name: s.name,
+
+                  // ✅ carry column details if exists
+                  columnDetails: s.columnDetails ?? undefined,
+
+                  completed: false,
+
+                  // ✅ time sensitive
+
+
+                  // Use admin description/info (fallback to "")
+                  description: s.description || s.info || "",
+
+                  // ✅ Convert admin trigger → user triggerType
+                  triggerType: s.trigger ?? "completed",
+
+                  // ✅ Popup mapping (if admin set one)
+                  popupDescription: s.trigger === "popup" && s.popupDescription
+                    ? s.popupDescription ?? ""
+                    : undefined,
+
+                  // ✅ Relation / linked steps mapping
+                  linkedStep:
+                    s.trigger === "relation" && s.linkedStep
+                      ? {
+                        id: s.linkedStep.id,
+                        requiredThings: [], // you can fill later
+                        futureColumnThings: [],
+                      }
+                      : undefined,
+                })),
+              statusTL: false,
+              completed: false,
+
+            };
+
+            setData(newTask); // this triggers table render
+          }}
+        >{data ? "Refresh preview" : "Preview"}</Button>
+        
+        </>}
+        </>}
+      </div>
+      {data && (
+        <UserTaskTable callingFromAdmin={true} adminTemplate={{id: "tmp_" + Date.now(),
+              name: templateName || "Unnamed",
+              categories,
+              description,
+              steps}}/>)}
+          {/* <ColumnHeaderTable name={templateName} saveTemplate={saveTemplate} categories={categories} color={color} description={description} steps={steps} data={data} setData={setData} /> */}
 
         </div>
       )}

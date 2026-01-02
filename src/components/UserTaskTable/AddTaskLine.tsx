@@ -11,10 +11,11 @@ import { Button } from "../ui/button";
  
  interface AddTaskLineProps {
   data: TaskRow[];
+  callingFromAdmin?:boolean;
   adminTemplate:AdminTemplate,
   setData: React.Dispatch<React.SetStateAction<TaskRow[]>>;
 }
-export default function AddTaskLine({  adminTemplate,data, setData }: AddTaskLineProps) {
+export default function AddTaskLine({  adminTemplate,data, setData ,callingFromAdmin}: AddTaskLineProps) {
   const [showCategories, setShowCategories] = useState(false);
 
   const handleAdd = (cat: Categories) => {
@@ -58,7 +59,7 @@ export default function AddTaskLine({  adminTemplate,data, setData }: AddTaskLin
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className={`flex flex-col gap-1 ${!callingFromAdmin && 'gap-3'} `}>
       {/* Toggle Button */}
       <Button className="w-[150px] mb-0" variant="default" 
        onClick={() => setShowCategories(!showCategories)}

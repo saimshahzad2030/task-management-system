@@ -67,7 +67,7 @@ export async function clearAllBrowserStorage() {
 
 
 
-const UserTaskTable = ({ adminTemplate }: UserTaskHeaderProps) => {
+const UserTaskTable = ({ adminTemplate,callingFromAdmin }: UserTaskHeaderProps) => {
   const { showAlert } = useAlert();
 
   const handleClearCache = async () => {
@@ -541,10 +541,13 @@ if (step.completed) {
 
 
   return (
-    <div className="flex flex-col items-start w-full pt-4
-    ">
-      <AddTaskLine adminTemplate={adminTemplate} data={data} setData={setData} />
+    <div className={`flex flex-col items-start w-full   ${!callingFromAdmin && "pt-4 "} ${callingFromAdmin && "border border-gray-700 p-2 rounded-md"}`}>
+ 
+      <AddTaskLine adminTemplate={adminTemplate} data={data} setData={setData} callingFromAdmin={callingFromAdmin}/>
+
+ 
       <div className="w-full flex flex-row items-center justify-end">
+        
         <Button variant="customNormal1" onClick={handleClearCache}>
           Clear Table
         </Button>
@@ -555,7 +558,7 @@ if (step.completed) {
         )}
 
       </div>
-      <Card className="w-full mt-2">
+      <Card className={`w-full ${!callingFromAdmin && "mt-2"} `}>
         <CardHeader className="w-full flex flex-row items-center justify-between">
           <CardTitle>Task Progress Table</CardTitle>
           <TaskSorter data={data} setData={setData} />
