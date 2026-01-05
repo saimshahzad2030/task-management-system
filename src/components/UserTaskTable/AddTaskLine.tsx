@@ -13,9 +13,10 @@ import { Button } from "../ui/button";
   data: TaskRow[];
   callingFromAdmin?:boolean;
   adminTemplate:AdminTemplate,
+  updateData:(updater: (prev: TaskRow[]) => TaskRow[])=>void;
   setData: React.Dispatch<React.SetStateAction<TaskRow[]>>;
 }
-export default function AddTaskLine({  adminTemplate,data, setData ,callingFromAdmin}: AddTaskLineProps) {
+export default function AddTaskLine({  adminTemplate,data, setData ,callingFromAdmin, updateData}: AddTaskLineProps) {
   const [showCategories, setShowCategories] = useState(false);
 
   const handleAdd = (cat: Categories) => {
@@ -54,7 +55,7 @@ export default function AddTaskLine({  adminTemplate,data, setData ,callingFromA
       
     };
 
-    setData((prev) => [...prev, newTask]);
+    updateData((prev) => [...prev, newTask]);
  
   };
 
@@ -63,7 +64,7 @@ export default function AddTaskLine({  adminTemplate,data, setData ,callingFromA
       {/* Toggle Button */}
       <Button className="w-[150px] mb-0" variant="default" 
        onClick={() => setShowCategories(!showCategories)}
-      >Add Task Line</Button>
+      >Add Customer</Button>
  
       {/* <button
         className="px-3 py-1 bg-black text-white text-sm font-semibold"

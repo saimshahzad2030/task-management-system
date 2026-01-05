@@ -24,6 +24,7 @@ import FullScreenLoader from "../Loader/FullScreenLoader";
 import { useAlert } from "../CenteredError/ShowCenteredError";
 import { getInvalidCheckIndexes, isInvalidCheckPlacement } from "@/utils/otherutils";
 import UserTaskTable from "../UserTaskTable/UserTaskTable";
+import { UserMenuPopover } from "../UserTasksHeader/UserTaskHeader";
 
 const showRequiredToast = (title: string, desc: string) => {
   toast.custom((t) => (
@@ -560,6 +561,9 @@ export default function AdminTemplates() {
 
   return (
     <div className="border rounded-lg p-4 bg-white space-y-4 w-full">
+      <div className="flex flex-row items-center w-full py-4">
+       <UserMenuPopover/>
+      </div>
       {/* Toggle Form */}
       <Button onClick={() => {
 

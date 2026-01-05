@@ -51,7 +51,7 @@ export const convertAdminTemplateToTaskData = (template: AdminTemplate): TaskRow
           ? {
             id: step.linkedStep.id,
             notes: step.linkedStep.notes || "",
-            futureColumnThings: (step.linkedStep.futureColumnThings ?? []).map(item => ({
+            futureColumnThings: (step.linkedStep.futureColumnThings?.filter(item=>{return item.needed == true || item.needed == "true"}) ?? []).map(item => ({
   ...item,
   needed: false,
 }))
